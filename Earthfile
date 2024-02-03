@@ -85,10 +85,20 @@ deploy:
         RUN docker run -p 8080:8080 repertoire:latest
     END
 
+# format - Run ruff format on the source
+format:
+    FROM python:3.11-alpine
+    RUN pip install ruff==0.1.2
+    COPY ./app /home/app
+    WORKDIR /home
+    RUN ruff format ./app
+    RUN ruff ./app --fix
+    SAVE ARTIFACT app AS LOCAL app
+
 # lint-ruff - Run ruff check on the source
 lint-ruff:
     FROM python:3.11-alpine
-    RUN pip install ruff==0.1.2 # If updated, update in pre-commit too and github actions
+    RUN pip install ruff==0.1.2
     COPY . /home
     WORKDIR /home
     RUN ruff .
