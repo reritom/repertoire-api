@@ -4,11 +4,13 @@ import enum
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Date, DateTime, Enum, ForeignKey, Integer
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Date, DateTime, Enum, Integer
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.database import Base
 
 if TYPE_CHECKING:
-    from .task import Task
+    pass
 
 
 class Weekday(enum.Enum):
@@ -35,14 +37,11 @@ class FrequencyPeriod(enum.Enum):
     year = "year"
 
 
-class TaskFrequency:
+class TaskFrequency(Base):
     __tablename__ = "task_frequencies"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-
-    task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), nullable=False)
-    task: Mapped[Task] = relationship(back_populates="frequency", uselist=False)
-
+    # task: Mapped[Task] = relationship(back_populates="frequency", uselist=False)
     type: Mapped[FrequencyType] = mapped_column(Enum(FrequencyType), nullable=False)
     period: Mapped[FrequencyPeriod] = mapped_column(
         Enum(FrequencyPeriod), nullable=False

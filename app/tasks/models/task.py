@@ -44,16 +44,21 @@ class Task(Base):
     status: Mapped[TaskStatus] = mapped_column(
         Enum(TaskStatus), default=TaskStatus.ongoing
     )
-
     frequency_id: Mapped[int] = mapped_column(
-        ForeignKey("task_untils.id"), nullable=False
+        ForeignKey("task_frequencies.id"),
+        nullable=False,
+        unique=True,
     )
-    frequency: Mapped[TaskFrequency] = relationship(back_populates="task")
+    frequency: Mapped[TaskFrequency] = relationship(
+        foreign_keys=frequency_id, lazy="joined"
+    )
 
     until_id: Mapped[int] = mapped_column(
-        ForeignKey("task_frequencies.id"), nullable=False
+        ForeignKey("task_untils.id"),
+        nullable=False,
+        unique=True,
     )
-    until: Mapped[TaskUntil] = relationship(back_populates="task")
+    until: Mapped[TaskUntil] = relationship(foreign_keys=until_id, lazy="joined")
 
     events: Mapped[List[TaskEvent]] = relationship(
         back_populates="task", cascade="all, delete-orphan"

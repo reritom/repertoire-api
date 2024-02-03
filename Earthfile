@@ -74,6 +74,30 @@ build-test:
     CMD sh -c "tail -f /dev/null"
     SAVE IMAGE repertoire-test:latest
 
+# test - Run the pytest suite in a container mounted on the app source
+test:
+    FROM earthly/dind:alpine
+    WAIT
+        BUILD +build-test
+    END
+
+    WORKDIR /home
+
+    # For docker compose running
+    COPY etc/test/test-initdb ./test-initdb
+    COPY etc/test/test-compose.yml ./test-compose.yml
+
+    # For source (dind backend container will mount onto this copied directory)
+    COPY app ./app
+
+    ARG path="."
+    ARG num="4"
+
+    WITH DOCKER --compose test-compose.yml --load repertoire-test:latest=+build-test
+        RUN --no-cache docker exec -t test-backend pytest --tb=short -n $num $path -v --durations=50
+    END
+
+
 # deploy - Deploy the application local stack
 deploy:
     LOCALLY

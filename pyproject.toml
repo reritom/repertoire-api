@@ -10,6 +10,8 @@ dependencies = [
     "pydantic>=2.6.0",
     "fastapi>=0.109.0",
     "uvicorn>=0.27.0.post1",
+    "pydantic-settings>=2.1.0",
+    "psycopg2>=2.9.9",
 ]
 requires-python = "==3.11.*"
 readme = "README.md"
@@ -19,6 +21,14 @@ license = {text = "MIT"}
 [tool.pdm]
 distribution = false
 
+[tool.pdm.dev-dependencies]
+factory-boy = []
+test = [
+    "factory-boy>=3.3.0",
+    "werkzeug>=3.0.1",
+    "pytest>=8.0.0",
+    "pytest-xdist>=3.5.0",
+]
 [tool.ruff]
 # Same as Black.
 line-length = 88
