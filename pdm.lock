@@ -5,7 +5,7 @@
 groups = ["default", "factory-boy", "test"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.1"
-content_hash = "sha256:098a5e8e7256f4b57c5bbbc0f72b9bd9e428c440f679f80e66ba25d0984aa581"
+content_hash = "sha256:6b2409c69bce2b09ca5e26788650b76d0c62341e4b043d827fb1ad3e513c179b"
 
 [[package]]
 name = "annotated-types"
@@ -31,6 +31,17 @@ dependencies = [
 files = [
     {file = "anyio-4.2.0-py3-none-any.whl", hash = "sha256:745843b39e829e108e518c489b31dc757de7d2131d53fac32bd8df268227bfee"},
     {file = "anyio-4.2.0.tar.gz", hash = "sha256:e1875bb4b4e2de1669f4bc7869b6d3f54231cdced71605e6e64c9be77e3be50f"},
+]
+
+[[package]]
+name = "attrs"
+version = "23.2.0"
+requires_python = ">=3.7"
+summary = "Classes Without Boilerplate"
+groups = ["test"]
+files = [
+    {file = "attrs-23.2.0-py3-none-any.whl", hash = "sha256:99b87a485a5820b23b879f04c2305b44b951b502fd64be915879d77a7e8fc6f1"},
+    {file = "attrs-23.2.0.tar.gz", hash = "sha256:935dc3b529c262f6cf76e50877d35a4bd3c1de194fd41f47a2b7ae8f19971f30"},
 ]
 
 [[package]]
@@ -96,6 +107,21 @@ dependencies = [
 files = [
     {file = "Faker-22.6.0-py3-none-any.whl", hash = "sha256:2b57f0256da6b45b7851dca87836ef5e2ae2fbb64d63d8697f1e47830d7b505d"},
     {file = "Faker-22.6.0.tar.gz", hash = "sha256:fa6d969728ef3da6229da91267a1bd4e6b902044c4822012d4fc46c71bb92b26"},
+]
+
+[[package]]
+name = "fast-depends"
+version = "2.3.1"
+requires_python = ">=3.8"
+summary = "FastDepends - extracted and cleared from HTTP domain logic FastAPI Dependency Injection System. Async and sync are both supported."
+groups = ["default"]
+dependencies = [
+    "anyio<5.0.0,>=3.0.0",
+    "pydantic!=1.8,!=1.8.1,<3.0.0,>=1.7.4",
+]
+files = [
+    {file = "fast_depends-2.3.1-py3-none-any.whl", hash = "sha256:1264fcca7f90eb908ba9ef060ca5cc56b381a4232860214695bf3176af40dece"},
+    {file = "fast_depends-2.3.1.tar.gz", hash = "sha256:f7a7d56f5425506be2104561176c4a92ddbe10d23e5a7d6a7e04c593cd0bc76b"},
 ]
 
 [[package]]
@@ -309,6 +335,21 @@ dependencies = [
 files = [
     {file = "pytest-8.0.0-py3-none-any.whl", hash = "sha256:50fb9cbe836c3f20f0dfa99c565201fb75dc54c8d76373cd1bde06b06657bdb6"},
     {file = "pytest-8.0.0.tar.gz", hash = "sha256:249b1b0864530ba251b7438274c4d251c58d868edaaec8762893ad4a0d71c36c"},
+]
+
+[[package]]
+name = "pytest-subtests"
+version = "0.11.0"
+requires_python = ">=3.7"
+summary = "unittest subTest() support and subtests fixture"
+groups = ["test"]
+dependencies = [
+    "attrs>=19.2.0",
+    "pytest>=7.0",
+]
+files = [
+    {file = "pytest-subtests-0.11.0.tar.gz", hash = "sha256:51865c88457545f51fb72011942f0a3c6901ee9e24cbfb6d1b9dc1348bafbe37"},
+    {file = "pytest_subtests-0.11.0-py3-none-any.whl", hash = "sha256:453389984952eec85ab0ce0c4f026337153df79587048271c7fd0f49119c07e4"},
 ]
 
 [[package]]

@@ -41,9 +41,6 @@ class Task(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str] = mapped_column(String(100), nullable=False)
 
-    status: Mapped[TaskStatus] = mapped_column(
-        Enum(TaskStatus), default=TaskStatus.ongoing
-    )
     frequency_id: Mapped[int] = mapped_column(
         ForeignKey("task_frequencies.id"),
         nullable=False,
@@ -68,4 +65,8 @@ class Task(Base):
 
     events: Mapped[List[TaskEvent]] = relationship(
         back_populates="task", cascade="all, delete-orphan"
+    )
+
+    status: Mapped[TaskStatus] = mapped_column(
+        Enum(TaskStatus), default=TaskStatus.ongoing
     )

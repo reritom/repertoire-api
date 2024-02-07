@@ -113,6 +113,7 @@ class TaskFrequencyCreationSchema(TaskFrequencySchema):
                     "unexpected_conditional_field",
                     "Unexpected value set: once at time, once on date, and once per weekday should not be defined",
                 )
+        return self
 
 
 class TaskUntilSchema(BaseModel):
@@ -161,6 +162,7 @@ class TaskUntilCreationSchema(TaskUntilSchema):
                     "expected_conditional_field",
                     "Until date must be set",
                 )
+        return self
 
 
 class TaskCreationSchema(BaseModel):

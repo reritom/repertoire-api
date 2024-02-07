@@ -38,6 +38,7 @@ class TaskFrequencyFactory(alchemy.SQLAlchemyModelFactory):
 
     type = FrequencyType.per
     period = FrequencyPeriod.week
+    amount = 1
 
 
 class TaskUntilFactory(alchemy.SQLAlchemyModelFactory):

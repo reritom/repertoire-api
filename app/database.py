@@ -12,3 +12,9 @@ class Base(DeclarativeBase):
 engine = create_engine(settings.SQLALCHEMY_DATABASE_URI)
 session_factory = sessionmaker(engine, autocommit=False, autoflush=False)
 Session = scoped_session(session_factory)
+
+
+def get_session():
+    session = Session()
+    yield session
+    session.close()
