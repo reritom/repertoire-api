@@ -65,7 +65,6 @@ def create_task(
     authenticated_user: Annotated[User, Depends],
     session: Annotated[Session, Depends],
 ):
-    print(new_task)
     task = Task(
         name=new_task.name,
         user=authenticated_user,
