@@ -4,13 +4,14 @@ import enum
 from datetime import datetime
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import Enum, ForeignKey, String
+from sqlalchemy import Enum, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
 if TYPE_CHECKING:
     from app.accounts.models.user import User
+    from app.tasks.models.task_metric import TaskMetric
 
     from .category import Category
     from .task_event import TaskEvent
@@ -26,6 +27,9 @@ class TaskStatus(enum.Enum):
 
 class Task(Base):
     __tablename__ = "tasks"
+    __table_args__ = (
+        UniqueConstraint("user_id", "name", name="unique_user_task_name"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     created: Mapped[datetime] = mapped_column(insert_default=datetime.utcnow)
@@ -64,6 +68,9 @@ class Task(Base):
     )
 
     events: Mapped[List[TaskEvent]] = relationship(
+        back_populates="task", cascade="all, delete-orphan"
+    )
+    metrics: Mapped[List[TaskMetric]] = relationship(
         back_populates="task", cascade="all, delete-orphan"
     )
 

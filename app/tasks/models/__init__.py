@@ -1,7 +1,9 @@
 from app.tasks.models.category import Category
 from app.tasks.models.task import Task
 from app.tasks.models.task_event import TaskEvent
+from app.tasks.models.task_event_metric import TaskEventMetric
 from app.tasks.models.task_frequency import TaskFrequency
+from app.tasks.models.task_metric import TaskMetric
 from app.tasks.models.task_until import TaskUntil
 
 __all__ = [
@@ -10,4 +12,6 @@ __all__ = [
     "TaskFrequency",
     "TaskUntil",
     "Task",
+    "TaskMetric",
+    "TaskEventMetric",
 ]

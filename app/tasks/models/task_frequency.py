@@ -41,7 +41,6 @@ class TaskFrequency(Base):
     __tablename__ = "task_frequencies"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    # task: Mapped[Task] = relationship(back_populates="frequency", uselist=False)
     type: Mapped[FrequencyType] = mapped_column(Enum(FrequencyType), nullable=False)
     period: Mapped[FrequencyPeriod] = mapped_column(
         Enum(FrequencyPeriod), nullable=True

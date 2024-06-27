@@ -20,7 +20,6 @@ class TaskUntil(Base):
     __tablename__ = "task_untils"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    # task: Mapped[Task] = relationship(back_populates="until", uselist=False)
     type: Mapped[UntilType] = mapped_column(Enum(UntilType), nullable=False)
     amount: Mapped[int | None] = mapped_column(Integer, nullable=True)
     date: Mapped[_date | None] = mapped_column(Date, nullable=True)

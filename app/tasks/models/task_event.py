@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import enum
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from sqlalchemy import DateTime, Enum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -11,6 +11,7 @@ from app.database import Base
 
 if TYPE_CHECKING:
     from .task import Task
+    from .task_event_metric import TaskEventMetric
 
 
 class TaskEventAround(enum.Enum):
@@ -32,3 +33,9 @@ class TaskEvent(Base):
         Enum(TaskEventAround), nullable=False
     )
     at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+
+    metrics: Mapped[List[TaskEventMetric]] = relationship(
+        "TaskEventMetric",
+        back_populates="task_event",
+        cascade="delete,all",
+    )
