@@ -4,7 +4,7 @@ from fast_depends.use import Depends, inject
 from sqlalchemy import Select, select
 
 from app.accounts.models.user import User
-from app.database import Session
+from app.database import SessionType
 from app.tasks.models.category import Category
 from app.tasks.models.task import Task, TaskStatus
 from app.tasks.models.task_frequency import TaskFrequency
@@ -37,7 +37,7 @@ def _get_category_id(
 def validate_name_is_unique(
     name: Annotated[str, Depends(_get_name)],
     statement: Annotated[Select, Depends(get_scoped_tasks_statement)],
-    session: Annotated[Session, Depends],
+    session: Annotated[SessionType, Depends],
 ):
     # TODO maybe make case insensitive
     if session.scalars(statement.where(Task.name == name)).first():
@@ -47,7 +47,7 @@ def validate_name_is_unique(
 def validate_category_is_visible(
     category_id: Annotated[int | None, Depends(_get_category_id)],
     statement: Annotated[Select, Depends(get_scoped_categories_statement)],
-    session: Annotated[Session, Depends],
+    session: Annotated[SessionType, Depends],
 ):
     if category_id:
         # TODO reraise as specific error
@@ -63,7 +63,7 @@ def validate_category_is_visible(
 def create_task(
     new_task: Annotated[TaskCreationSchema, Depends],
     authenticated_user: Annotated[User, Depends],
-    session: Annotated[Session, Depends],
+    session: Annotated[SessionType, Depends],
 ):
     task = Task(
         name=new_task.name,
@@ -92,7 +92,7 @@ def create_task(
 def _get_task(
     statement: Annotated[Select, Depends(get_scoped_tasks_statement)],
     task_id: Annotated[int, Depends],
-    session: Annotated[Session, Depends],
+    session: Annotated[SessionType, Depends],
 ) -> Task:
     statement = statement.where(Task.id == task_id)
     return session.scalars(statement).one()
@@ -110,7 +110,7 @@ class NoFilter:
 @inject
 def get_tasks(
     statement: Annotated[Select, Depends(get_scoped_tasks_statement)],
-    session: Annotated[Session, Depends],
+    session: Annotated[SessionType, Depends],
     status: TaskStatus | NoFilter = NoFilter,
     category_id: int | None | NoFilter = NoFilter,
 ):
@@ -131,7 +131,7 @@ def validate_task_status_for_completion(task: Annotated[Task, Depends(_get_task)
 @inject(extra_dependencies=[Depends(validate_task_status_for_completion)])
 def complete_task(
     task: Annotated[Task, Depends(_get_task)],
-    session: Annotated[Session, Depends],
+    session: Annotated[SessionType, Depends],
 ):
     task.status = TaskStatus.completed
     session.add(task)
@@ -146,7 +146,7 @@ def validate_task_is_active(task: Annotated[Task, Depends(_get_task)]):
 @inject(extra_dependencies=[Depends(validate_task_is_active)])
 def pause_task(
     task: Annotated[Task, Depends(_get_task)],
-    session: Annotated[Session, Depends],
+    session: Annotated[SessionType, Depends],
 ):
     task.status = TaskStatus.paused
     session.add(task)
@@ -161,7 +161,7 @@ def validate_task_is_paused(task: Annotated[Task, Depends(_get_task)]):
 @inject(extra_dependencies=[Depends(validate_task_is_paused)])
 def unpause_task(
     task: Annotated[Task, Depends(_get_task)],
-    session: Annotated[Session, Depends],
+    session: Annotated[SessionType, Depends],
 ) -> None:
     task.status = TaskStatus.ongoing
     session.add(task)

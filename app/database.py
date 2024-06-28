@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.orm import Session as SessionType
 from sqlalchemy.orm.scoping import scoped_session
 
 from app.settings import settings
@@ -11,10 +12,13 @@ class Base(DeclarativeBase):
 
 engine = create_engine(settings.SQLALCHEMY_DATABASE_URI)
 session_factory = sessionmaker(engine, autocommit=False, autoflush=False)
-Session = scoped_session(session_factory)
+Session: SessionType = scoped_session(session_factory)
 
 
 def get_session():
     session = Session()
     yield session
     session.close()
+
+
+__all__ = ["get_session", "Base", "Session", "SessionType"]
