@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 from app.accounts.tests.factories import UserFactory
-from app.tasks.models.category import Category
+from app.tasks.models.category import Category, IconNameEnum
 from app.tasks.tests.factories import CategoryFactory, TaskFactory
 
 
@@ -11,7 +11,13 @@ def test_create_category_ok(session):
     existing = CategoryFactory()
 
     user = UserFactory()
-    new = Category(name=existing.name, user=user, description="mydescription")
+    new = Category(
+        name=existing.name,
+        user=user,
+        description="mydescription",
+        icon_name=IconNameEnum.swimming,
+        icon_hex_colour="ffffff",
+    )
 
     session.add(new)
     session.flush()
@@ -24,7 +30,13 @@ def test_create_category_ok(session):
 def test_create_category_failure_duplicate_name(session):
     existing = CategoryFactory()
 
-    new = Category(name=existing.name, user=existing.user, description="mydescription")
+    new = Category(
+        name=existing.name,
+        user=existing.user,
+        description="mydescription",
+        icon_name=IconNameEnum.swimming,
+        icon_hex_colour="ffffff",
+    )
 
     session.add(new)
 

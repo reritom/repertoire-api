@@ -2,7 +2,7 @@ from typing import Optional
 
 from app.shared.dao import BaseDao
 from app.shared.sentinels import NO_FILTER, OptionalFilter
-from app.tasks.models.category import Category
+from app.tasks.models.category import Category, IconNameEnum
 
 
 class CategoryDao(BaseDao[Category]):
@@ -14,12 +14,16 @@ class CategoryDao(BaseDao[Category]):
         user_id: int,
         name: str,
         description: str,
+        icon_name: IconNameEnum,
+        icon_hex_colour: str,
         parent_category_id: Optional[int] = None,
     ) -> Category:
         category = Category(
             user_id=user_id,
             name=name,
             description=description,
+            icon_name=icon_name,
+            icon_hex_colour=icon_hex_colour,
             parent_category_id=parent_category_id,
         )
 

@@ -7,7 +7,7 @@ from factory import (
 
 from app.accounts.tests.factories import UserFactory
 from app.database import Session
-from app.tasks.models.category import Category
+from app.tasks.models.category import Category, IconNameEnum
 from app.tasks.models.task import Task
 from app.tasks.models.task_event import TaskEvent, TaskEventAround
 from app.tasks.models.task_event_metric import TaskEventMetric
@@ -98,3 +98,5 @@ class CategoryFactory(alchemy.SQLAlchemyModelFactory):
     user = SubFactory(UserFactory)
     name = Sequence(lambda n: f"Category {n}")
     description = Sequence(lambda n: f"I am a category description {n}")
+    icon_name = IconNameEnum.swimming
+    icon_hex_colour = "ffffff"

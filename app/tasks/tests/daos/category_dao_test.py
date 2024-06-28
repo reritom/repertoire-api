@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.accounts.tests.factories import UserFactory
 from app.tasks.daos.category_dao import CategoryDao
-from app.tasks.models.category import Category
+from app.tasks.models.category import Category, IconNameEnum
 from app.tasks.tests.factories import CategoryFactory
 
 
@@ -18,12 +18,18 @@ def test_category_create_ok(session):
     user = UserFactory()
 
     new = CategoryDao(session=session).create(
-        user_id=user.id, name=existing.name, description="mydescription"
+        user_id=user.id,
+        name=existing.name,
+        description="mydescription",
+        icon_name=IconNameEnum.swimming,
+        icon_hex_colour="ffffff",
     )
 
     assert new.user == user
     assert new.name == existing.name
     assert new.description == "mydescription"
+    assert new.icon_name == IconNameEnum.swimming
+    assert new.icon_hex_colour == "ffffff"
 
 
 def test_category_create_failure_duplicate_name(session):
@@ -31,7 +37,11 @@ def test_category_create_failure_duplicate_name(session):
 
     with pytest.raises(IntegrityError) as ctx:
         CategoryDao(session=session).create(
-            user_id=existing.user_id, name=existing.name, description="mydescription"
+            user_id=existing.user_id,
+            name=existing.name,
+            description="mydescription",
+            icon_name=IconNameEnum.swimming,
+            icon_hex_colour="ffffff",
         )
 
     assert "unique_user_category_name" in ctx.value.args[0]
