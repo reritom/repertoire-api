@@ -47,6 +47,7 @@ def test_create_category_failure_duplicate_name(session):
 
 
 def test_delete_category_no_cascade(session):
+    # TODO test cascade of child categories
     category = CategoryFactory()
     task = TaskFactory(category=category)
 

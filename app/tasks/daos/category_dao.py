@@ -18,6 +18,7 @@ class CategoryDao(BaseDao[Category]):
         icon_hex_colour: str,
         parent_category_id: Optional[int] = None,
     ) -> Category:
+        print(f"creating with {parent_category_id}")
         category = Category(
             user_id=user_id,
             name=name,
