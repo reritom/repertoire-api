@@ -1,7 +1,7 @@
 from typing import Optional
 
 from app.shared.dao import BaseDao
-from app.shared.sentinels import NO_FILTER, OptionalFilter
+from app.shared.sentinels import NO_FILTER, NO_OP, OptionalAction, OptionalFilter
 from app.tasks.models.task import Task, TaskStatus
 
 
@@ -59,6 +59,14 @@ class TaskDao(BaseDao[Task]):
             statement = statement.where(Task.user_id == user_id)
 
         return statement
+
+    def update(self, id: int, user_id: int, status: OptionalAction[TaskStatus] = NO_OP):
+        task = self.get(id=id, user_id=user_id)
+
+        if status != NO_OP:
+            task.status = status
+            self.session.add(task)
+            self.session.flush()
 
     def delete(self, id: int, user_id: int):
         task = self.get(id=id, user_id=user_id)

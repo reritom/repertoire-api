@@ -4,6 +4,7 @@ import pytest
 from sqlalchemy.exc import NoResultFound
 
 from app.accounts.tests.factories import UserFactory
+from app.shared.exceptions import ServiceValidationError
 from app.tasks.models.task import TaskStatus
 from app.tasks.models.task_frequency import (
     FrequencyPeriod,
@@ -16,7 +17,7 @@ from app.tasks.schemas.task_schema import (
     TaskFrequencyCreationSchema,
     TaskUntilCreationSchema,
 )
-from app.tasks.services import task_service
+from app.tasks.services.task_service import service
 from app.tasks.tests.factories import CategoryFactory, TaskFactory
 
 
@@ -25,8 +26,8 @@ def test_create_task_ok__per__once_per_period_until_stopped(session):
     category = CategoryFactory(user=user)
     other_task = TaskFactory()  # Noise
 
-    task = task_service.create_task(
-        new_task=TaskCreationSchema(
+    task = service.create_task(
+        task_creation_payload=TaskCreationSchema(
             name=other_task.name,
             description="mydescription",
             category_id=category.id,
@@ -56,8 +57,8 @@ def test_create_task_ok__per__once_per_week_on_weekday_until_stopped(session):
     category = CategoryFactory(user=user)
     other_task = TaskFactory()  # Noise
 
-    task = task_service.create_task(
-        new_task=TaskCreationSchema(
+    task = service.create_task(
+        task_creation_payload=TaskCreationSchema(
             name=other_task.name,
             description="mydescription",
             category_id=category.id,
@@ -91,8 +92,8 @@ def test_create_task_failure_category_not_visible(session):
     user = UserFactory()
 
     with pytest.raises(NoResultFound):
-        task_service.create_task(
-            new_task=TaskCreationSchema(
+        service.create_task(
+            task_creation_payload=TaskCreationSchema(
                 name="mytask",
                 description="mydescription",
                 category_id=category.id,
@@ -112,9 +113,9 @@ def test_create_task_failure_duplicate_name(session):
     user = UserFactory()
     task = TaskFactory(user=user)
 
-    with pytest.raises(ValueError) as ctx:
-        task_service.create_task(
-            new_task=TaskCreationSchema(
+    with pytest.raises(ServiceValidationError) as ctx:
+        service.create_task(
+            task_creation_payload=TaskCreationSchema(
                 name=task.name,
                 description="mydescription",
                 frequency=TaskFrequencyCreationSchema(
@@ -133,7 +134,7 @@ def test_create_task_failure_duplicate_name(session):
 
 def test_get_task_ok(session):
     task = TaskFactory()
-    task_service.get_task(
+    service.get_task(
         task_id=task.id,
         authenticated_user=task.user,
         session=session,
@@ -142,7 +143,7 @@ def test_get_task_ok(session):
 
 def test_get_task_failure_invalid_id(session):
     with pytest.raises(NoResultFound):
-        task_service.get_task(
+        service.get_task(
             task_id=1234,
             authenticated_user=UserFactory(),
             session=session,
@@ -153,7 +154,7 @@ def test_get_task_failure_not_visible_to_user(session):
     task = TaskFactory()
 
     with pytest.raises(NoResultFound):
-        task_service.get_task(
+        service.get_task(
             task_id=task.id,
             authenticated_user=UserFactory(),
             session=session,
@@ -165,7 +166,7 @@ def test_get_tasks_ok(session):
     task_2 = TaskFactory(user=task_1.user)
     task_3 = TaskFactory()  # Noise
 
-    tasks = task_service.get_tasks(
+    tasks = service.get_tasks(
         session=session,
         authenticated_user=task_1.user,
     )
@@ -190,7 +191,7 @@ def test_get_tasks_filter_status(session, subtests):
 
     for status, expected_tasks in cases:
         with subtests.test():
-            tasks = task_service.get_tasks(
+            tasks = service.get_tasks(
                 session=session,
                 authenticated_user=task_1.user,
                 status=status,
@@ -215,7 +216,7 @@ def test_get_tasks_filter_category_id(session, subtests):
 
     for category_id, expected_tasks in cases:
         with subtests.test():
-            tasks = task_service.get_tasks(
+            tasks = service.get_tasks(
                 session=session,
                 authenticated_user=task_1.user,
                 category_id=category_id,
@@ -227,7 +228,7 @@ def test_get_tasks_filter_category_id(session, subtests):
 def test_pause_task_ok(session):
     task = TaskFactory(status=TaskStatus.ongoing)
 
-    task_service.pause_task(
+    service.pause_task(
         authenticated_user=task.user,
         task_id=task.id,
         session=session,
@@ -241,7 +242,7 @@ def test_pause_task_failure_not_visible_to_user(session):
     task = TaskFactory(status=TaskStatus.ongoing)
 
     with pytest.raises(NoResultFound):
-        task_service.pause_task(
+        service.pause_task(
             authenticated_user=UserFactory(),
             task_id=task.id,
             session=session,
@@ -251,8 +252,8 @@ def test_pause_task_failure_not_visible_to_user(session):
 def test_pause_task_failure_task_not_ongoing(session):
     task = TaskFactory(status=TaskStatus.completed)
 
-    with pytest.raises(ValueError) as ctx:
-        task_service.pause_task(
+    with pytest.raises(ServiceValidationError) as ctx:
+        service.pause_task(
             authenticated_user=task.user,
             task_id=task.id,
             session=session,
@@ -264,7 +265,7 @@ def test_pause_task_failure_task_not_ongoing(session):
 def test_complete_task_ok(session):
     task = TaskFactory(status=TaskStatus.ongoing)
 
-    task_service.complete_task(
+    service.complete_task(
         authenticated_user=task.user,
         task_id=task.id,
         session=session,
@@ -278,7 +279,7 @@ def test_complete_task_failure_not_visible_to_user(session):
     task = TaskFactory(status=TaskStatus.ongoing)
 
     with pytest.raises(NoResultFound):
-        task_service.complete_task(
+        service.complete_task(
             authenticated_user=UserFactory(),
             task_id=task.id,
             session=session,
@@ -288,8 +289,8 @@ def test_complete_task_failure_not_visible_to_user(session):
 def test_complete_task_failure_task_not_ongoing(session):
     task = TaskFactory(status=TaskStatus.completed)
 
-    with pytest.raises(ValueError) as ctx:
-        task_service.complete_task(
+    with pytest.raises(ServiceValidationError) as ctx:
+        service.complete_task(
             authenticated_user=task.user,
             task_id=task.id,
             session=session,

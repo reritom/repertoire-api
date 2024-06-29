@@ -151,6 +151,20 @@ def test_query_filter_by_user_id(session, subtests):
             assert tasks == expected_tasks
 
 
+def test_update_status_ok(session):
+    task = TaskFactory(status=TaskStatus.ongoing)
+
+    TaskDao(session=session).update(
+        id=task.id,
+        user_id=task.user_id,
+        status=TaskStatus.completed,
+    )
+
+    session.refresh(task)
+
+    assert task.status == TaskStatus.completed
+
+
 def test_delete_ok(session):
     # Noise
     TaskFactory.create_batch(3)
