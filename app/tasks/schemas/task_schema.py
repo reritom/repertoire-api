@@ -56,7 +56,7 @@ class TaskFrequencyCreationSchema(TaskFrequencySchema):
         if self.type == FrequencyType.on:
             if self.period is not None:
                 raise PydanticCustomError(
-                    "expected_conditional_field",
+                    "expected_conditional_field",  # TODO should be unexpected?
                     "Period shouldn't be set for specific events",
                 )
 

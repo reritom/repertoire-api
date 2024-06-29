@@ -10,6 +10,7 @@ from app.tasks.daos.task_frequency_dao import TaskFrequencyDao
 from app.tasks.daos.task_until_dao import TaskUntilDao
 from app.tasks.models.task import Task, TaskStatus
 from app.tasks.schemas.task_schema import TaskCreationSchema
+from app.tasks.services._dependencies import get_task as get_task_dependency
 from app.tasks.services._dependencies import get_task_dao
 from app.tasks.services.category_service import service as category_service
 
@@ -51,31 +52,21 @@ def validate_category_is_visible_for_task_creation(
         )
 
 
-def _get_task(
-    session: SessionType = Depends,
-    authenticated_user: User = Depends,
-    task_id: int = Depends,
+def validate_task_status_for_completion(
+    task: Annotated[Task, Depends(get_task_dependency)],
 ):
-    from app.tasks.services.task_service import service
-
-    return service.get_task(
-        session=session,
-        authenticated_user=authenticated_user,
-        task_id=task_id,
-    )
-
-
-def validate_task_status_for_completion(task: Annotated[Task, Depends(_get_task)]):
     if task.status == TaskStatus.completed:
         raise ServiceValidationError("The task is already completed")
 
 
-def validate_task_status_for_pause(task: Annotated[Task, Depends(_get_task)]):
+def validate_task_status_for_pause(task: Annotated[Task, Depends(get_task_dependency)]):
     if task.status != TaskStatus.ongoing:
         raise ServiceValidationError("Cannot pause a task that isn't ongoing")
 
 
-def validate_task_status_for_unpause(task: Annotated[Task, Depends(_get_task)]):
+def validate_task_status_for_unpause(
+    task: Annotated[Task, Depends(get_task_dependency)],
+):
     if task.status != TaskStatus.paused:
         raise ServiceValidationError("Cannot unpause a task that isn't paused")
 
