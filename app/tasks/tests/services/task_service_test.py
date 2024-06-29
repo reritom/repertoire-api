@@ -1,11 +1,12 @@
-from datetime import time
+from datetime import date, time
 
 import pytest
+from fast_depends import dependency_provider
 from sqlalchemy.exc import NoResultFound
 
 from app.accounts.tests.factories import UserFactory
 from app.shared.exceptions import ServiceValidationError
-from app.tasks.models.task import TaskStatus
+from app.tasks.models.task import Task, TaskStatus
 from app.tasks.models.task_frequency import (
     FrequencyPeriod,
     FrequencyType,
@@ -18,7 +19,8 @@ from app.tasks.schemas.task_schema import (
     TaskUntilCreationSchema,
 )
 from app.tasks.services.task_service import service
-from app.tasks.tests.factories import CategoryFactory, TaskFactory
+from app.tasks.services.task_service._dependencies import get_date_now
+from app.tasks.tests.factories import CategoryFactory, TaskEventFactory, TaskFactory
 
 
 def test_create_task_ok__per__once_per_period_until_stopped(session):
@@ -297,3 +299,55 @@ def test_complete_task_failure_task_not_ongoing(session):
         )
 
     assert ctx.value.args[0] == "The task is already completed"
+
+
+@pytest.mark.parametrize(
+    "amount_of_events,expected_status",
+    [
+        (1, TaskStatus.ongoing),
+        (2, TaskStatus.completed),
+        (3, TaskStatus.completed),
+    ],
+)
+def test_recompute_task_status__amount_completed(
+    session, amount_of_events, expected_status
+):
+    task = TaskFactory(
+        status=TaskStatus.ongoing,
+        until__type=UntilType.amount,
+        until__amount=2,
+    )
+    TaskEventFactory.create_batch(amount_of_events, task=task)
+
+    service.recompute_task_status(
+        task_id=task.id,
+        authenticated_user=task.user,
+        session=session,
+    )
+
+    assert session.get(Task, task.id).status == expected_status
+
+
+@pytest.mark.parametrize(
+    "now,expected_status",
+    [
+        (date(2020, 12, 24), TaskStatus.ongoing),
+        (date(2020, 12, 25), TaskStatus.completed),
+        (date(2020, 12, 26), TaskStatus.completed),
+    ],
+)
+def test_recompute_task_status__date_passed(session, now, expected_status):
+    task = TaskFactory(
+        status=TaskStatus.ongoing,
+        until__type=UntilType.date,
+        until__date=date(2020, 12, 25),
+    )
+
+    with dependency_provider.scope(get_date_now, lambda: now):
+        service.recompute_task_status(
+            task_id=task.id,
+            authenticated_user=task.user,
+            session=session,
+        )
+
+    assert session.get(Task, task.id).status == expected_status

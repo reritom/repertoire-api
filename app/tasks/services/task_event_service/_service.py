@@ -12,6 +12,7 @@ from app.tasks.services.task_event_service._dependencies import (
     get_task_event_dao,
     get_task_id_from_task_event_creation_payload,
 )
+from app.tasks.services.task_service.service import recompute_task_status
 
 
 @inject(
@@ -20,8 +21,9 @@ from app.tasks.services.task_event_service._dependencies import (
     ]
 )
 def _create_task_event(
-    session: SessionType,
-    task_event_creation_payload: TaskEventCreationSchema,
+    session: SessionType = Depends,
+    authenticated_user: User = Depends,
+    task_event_creation_payload: TaskEventCreationSchema = Depends,
     # Injected
     task_event_dao: TaskEventDao = Depends(get_task_event_dao),
 ) -> TaskEvent:
@@ -31,15 +33,19 @@ def _create_task_event(
         at=task_event_creation_payload.at,
     )
     session.commit()
-    # TODO trigger recomputation of task status
+    recompute_task_status(
+        session=session,
+        task_id=task_event.task_id,
+        authenticated_user=authenticated_user,
+    )
     return task_event
 
 
 @inject
 def _delete_task_event(
-    session: SessionType,
-    authenticated_user: User,
-    task_event_id: int,
+    session: SessionType = Depends,
+    authenticated_user: User = Depends,
+    task_event_id: int = Depends,
     # Injected
     task_event_dao: TaskEventDao = Depends(get_task_event_dao),
 ) -> None:
@@ -49,8 +55,8 @@ def _delete_task_event(
 
 @inject
 def _get_task_event(
-    authenticated_user: User,
-    task_event_id: int,
+    authenticated_user: User = Depends,
+    task_event_id: int = Depends,
     # Injected
     task_event_dao: TaskEventDao = Depends(get_task_event_dao),
 ) -> TaskEvent:
@@ -59,8 +65,8 @@ def _get_task_event(
 
 @inject
 def _get_task_events(
-    authenticated_user: User,
-    task_id: int,
+    authenticated_user: User = Depends,
+    task_id: int = Depends,
     # Injected
     task_event_dao: TaskEventDao = Depends(get_task_event_dao),
 ) -> List[TaskEvent]:

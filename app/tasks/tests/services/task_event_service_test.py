@@ -1,8 +1,10 @@
 from datetime import datetime
+from unittest.mock import patch
 
 import pytest
 from sqlalchemy.exc import NoResultFound
 
+import app.tasks.services.task_event_service._service as task_event_service
 from app.accounts.tests.factories import UserFactory
 from app.tasks.models.task_event import TaskEvent, TaskEventAround
 from app.tasks.schemas.task_event_schema import TaskEventCreationSchema
@@ -12,6 +14,7 @@ from app.tasks.services.task_event_service.service import (
     get_task_event,
     get_task_events,
 )
+from app.tasks.services.task_service.service import recompute_task_status
 from app.tasks.tests.factories import TaskEventFactory, TaskFactory
 
 
@@ -19,13 +22,24 @@ def test_create_task_event_ok__today(session):
     user = UserFactory()
     task = TaskFactory(user=user)
 
-    task_event = create_task_event(
+    with patch.object(
+        task_event_service,
+        "recompute_task_status",
+        wraps=recompute_task_status,
+    ) as mocked_recompute_task_status:
+        task_event = create_task_event(
+            session=session,
+            authenticated_user=user,
+            task_event_creation_payload=TaskEventCreationSchema(
+                task_id=task.id,
+                around=TaskEventAround.today,
+            ),
+        )
+
+    mocked_recompute_task_status.assert_called_once_with(
         session=session,
         authenticated_user=user,
-        task_event_creation_payload=TaskEventCreationSchema(
-            task_id=task.id,
-            around=TaskEventAround.today,
-        ),
+        task_id=task.id,
     )
 
     assert task_event.task == task

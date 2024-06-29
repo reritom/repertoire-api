@@ -1,3 +1,4 @@
+from datetime import date
 from typing import List, Optional
 
 from fast_depends import Depends, inject
@@ -9,9 +10,11 @@ from app.tasks.daos.task_dao import TaskDao
 from app.tasks.daos.task_frequency_dao import TaskFrequencyDao
 from app.tasks.daos.task_until_dao import TaskUntilDao
 from app.tasks.models.task import Task, TaskStatus
+from app.tasks.models.task_until import UntilType
 from app.tasks.schemas.task_schema import TaskCreationSchema
 from app.tasks.services._dependencies import get_task_dao
 from app.tasks.services.task_service._dependencies import (
+    get_date_now,
     get_task_frequency_dao,
     get_task_until_dao,
     validate_category_is_visible_for_task_creation,
@@ -149,3 +152,26 @@ def _complete_task(
         status=TaskStatus.completed,
     )
     session.commit()
+
+
+@inject
+def _recompute_task_status(
+    session: SessionType = Depends,
+    task_id: int = Depends,
+    authenticated_user: User = Depends,
+    # Injected
+    now: date = Depends(get_date_now),
+    task_dao: TaskDao = Depends(get_task_dao),
+) -> None:
+    task = task_dao.get(id=task_id)
+
+    if ((task.until.type == UntilType.date) and (now >= task.until.date)) or (
+        (task.until.type == UntilType.amount)
+        and (len(task.events) >= task.until.amount)
+    ):
+        task_dao.update(
+            id=task_id,
+            user_id=authenticated_user.id,
+            status=TaskStatus.completed,
+        )
+        session.commit()

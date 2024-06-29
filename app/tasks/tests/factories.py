@@ -1,9 +1,4 @@
-from factory import (
-    SelfAttribute,
-    Sequence,
-    SubFactory,
-    alchemy,
-)
+from factory import SelfAttribute, Sequence, SubFactory, alchemy
 
 from app.accounts.tests.factories import UserFactory
 from app.database import Session
@@ -52,6 +47,7 @@ class TaskUntilFactory(alchemy.SQLAlchemyModelFactory):
 
     type = UntilType.amount
     amount = 10
+    date = None
 
 
 class TaskEventFactory(alchemy.SQLAlchemyModelFactory):

@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Annotated
 
 from fast_depends import Depends
@@ -77,3 +78,7 @@ def get_task_frequency_dao(session: SessionType = Depends) -> TaskFrequencyDao:
 
 def get_task_until_dao(session: SessionType = Depends) -> TaskUntilDao:
     return TaskUntilDao(session=session)
+
+
+def get_date_now() -> date:
+    return date.today()
