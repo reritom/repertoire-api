@@ -2,15 +2,11 @@ from __future__ import annotations
 
 import enum
 from datetime import date, time
-from typing import TYPE_CHECKING
 
 from sqlalchemy import Date, Enum, Integer, Time
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
-
-if TYPE_CHECKING:
-    pass
 
 
 class Weekday(enum.Enum):
@@ -37,6 +33,14 @@ class FrequencyPeriod(enum.Enum):
     year = "year"
 
 
+def _format_time(_time: time) -> str:
+    return _time.strftime("%I:%M").lstrip("0") + _time.strftime("%p").lower()
+
+
+def _format_date(_date: date) -> str:
+    return _date.strftime("%Y-%m-%d")
+
+
 class TaskFrequency(Base):
     __tablename__ = "task_frequencies"
 
@@ -51,3 +55,53 @@ class TaskFrequency(Base):
         Enum(Weekday), nullable=True
     )
     once_at_time: Mapped[time | None] = mapped_column(Time, nullable=True)
+
+    @property
+    def representation(self) -> str:
+        if self.amount == 1:
+            amount_representation = "Once"
+        elif self.amount == 2:
+            amount_representation = "Twice"
+        else:
+            amount_representation = f"{self.amount} times"
+
+        if self.type == FrequencyType.this:
+            return f"{amount_representation} this {self.period.value}"
+
+        if self.type == FrequencyType.on:
+            representation = f"Once on {_format_date(self.once_on_date)}"
+            if self.once_at_time:
+                representation = (
+                    f"{representation} at {_format_time(self.once_at_time)}"
+                )
+            return representation
+
+        if self.type == FrequencyType.per:
+            representation = f"{amount_representation} per {self.period.value}"
+
+            if self.amount != 1:
+                return representation
+
+            if self.period == FrequencyPeriod.day and self.once_at_time:
+                representation = (
+                    f"{representation} at {_format_time(self.once_at_time)}"
+                )
+
+            elif self.period == FrequencyPeriod.week:
+                if self.once_per_weekday:
+                    representation = (
+                        f"{representation} on {self.once_per_weekday.value}"
+                    )
+                else:
+                    representation = f"{representation} on any day"
+
+                if self.once_at_time:
+                    representation = (
+                        f"{representation} at {_format_time(self.once_at_time)}"
+                    )
+                else:
+                    representation = f"{representation} at any time"
+
+            return representation
+
+        # We won't reach here
