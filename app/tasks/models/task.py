@@ -8,6 +8,7 @@ from sqlalchemy import Enum, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+from app.tasks.models.task_frequency import FrequencyType
 
 if TYPE_CHECKING:
     from app.accounts.models.user import User
@@ -79,3 +80,10 @@ class Task(Base):
     )
 
     # TODO join the most recent event and return it on the schema
+
+    @property
+    def is_pausable(self) -> bool:
+        return (
+            self.status == TaskStatus.ongoing
+            and self.frequency.type == FrequencyType.per
+        )

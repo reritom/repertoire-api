@@ -13,7 +13,7 @@ class UntilType(enum.Enum):
     stopped = "stopped"
     date = "date"
     amount = "amount"
-    completed = "completed"
+    completed = "completed"  # For this "on" frequency type
 
 
 class TaskUntil(Base):
@@ -23,3 +23,24 @@ class TaskUntil(Base):
     type: Mapped[UntilType] = mapped_column(Enum(UntilType), nullable=False)
     amount: Mapped[int | None] = mapped_column(Integer, nullable=True)
     date: Mapped[_date | None] = mapped_column(Date, nullable=True)
+
+    @property
+    def representation(self) -> str:
+        if self.type == UntilType.completed:
+            return "Completed or I stop it"
+
+        if self.type == UntilType.stopped:
+            return "I stop it"
+
+        if self.type == UntilType.date:
+            return self.date.strftime("%Y-%m-%d")
+
+        if self.type == UntilType.amount:
+            if self.amount == 1:
+                return "Done once"
+            if self.amount == 2:
+                return "Done twice"
+            else:
+                return f"Done {self.amount} times"
+
+        # Wont get here
