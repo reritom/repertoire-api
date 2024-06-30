@@ -34,6 +34,9 @@ class TaskEvent(Base):
     )
     at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
+    # Computed from the created+around+at, but stored as it is static
+    effective_datetime: Mapped[datetime] = mapped_column(DateTime)
+
     metrics: Mapped[List[TaskEventMetric]] = relationship(
         "TaskEventMetric",
         back_populates="task_event",

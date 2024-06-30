@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from factory import SelfAttribute, Sequence, SubFactory, alchemy
+from factory.declarations import LazyFunction
 
 from app.accounts.tests.factories import UserFactory
 from app.database import Session
@@ -58,6 +61,7 @@ class TaskEventFactory(alchemy.SQLAlchemyModelFactory):
 
     task = SubFactory(TaskFactory)
     around = TaskEventAround.today
+    effective_datetime = LazyFunction(datetime.utcnow)
 
 
 class TaskMetricFactory(alchemy.SQLAlchemyModelFactory):

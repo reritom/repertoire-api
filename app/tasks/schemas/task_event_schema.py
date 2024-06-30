@@ -31,3 +31,5 @@ class TaskEventCreationSchema(BaseModel):
 
 class TaskEventSchema(TaskEventCreationSchema):
     id: int
+    effective_datetime: datetime
+    created: datetime

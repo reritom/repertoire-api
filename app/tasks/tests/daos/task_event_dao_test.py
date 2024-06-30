@@ -12,12 +12,17 @@ def test_create_event_ok(session):
     task_event = TaskEventDao(session=session).create(
         task_id=task.id,
         around=TaskEventAround.specifically,
-        at=datetime(2020, 12, 25, 12, 0, 0),
+        at=datetime(2020, 12, 24, 12, 0, 0),
+        # In this real case the "effective_datetime" would be the same as "at"
+        effective_datetime=datetime(2020, 12, 24, 12, 0, 1),
+        created=datetime(2020, 12, 25, 12, 0, 0),
     )
 
     assert task_event.task == task
     assert task_event.around == TaskEventAround.specifically
-    assert task_event.at == datetime(2020, 12, 25, 12, 0, 0)
+    assert task_event.at == datetime(2020, 12, 24, 12, 0, 0)
+    assert task_event.effective_datetime == datetime(2020, 12, 24, 12, 0, 1)
+    assert task_event.created == datetime(2020, 12, 25, 12, 0, 0)
 
 
 def test_query_filter_by_id(session, subtests):
@@ -28,7 +33,7 @@ def test_query_filter_by_id(session, subtests):
     task_event_2 = TaskEventFactory()
 
     cases = [
-        ({}, [task_event_1, task_event_2]),
+        ({}, [task_event_2, task_event_1]),
         ({"id": task_event_1.id}, [task_event_1]),
     ]
 
@@ -46,7 +51,7 @@ def test_query_filter_by_task_id(session, subtests):
     task_event_2 = TaskEventFactory()
 
     cases = [
-        ({}, [task_event_1, task_event_2]),
+        ({}, [task_event_2, task_event_1]),
         ({"task_id": task_event_1.task_id}, [task_event_1]),
     ]
 
@@ -65,7 +70,7 @@ def test_query_filter_by_user_id(session, subtests):
     task_event_2 = TaskEventFactory()
 
     cases = [
-        ({}, [task_event_1, task_event_2]),
+        ({}, [task_event_2, task_event_1]),
         ({"user_id": task_event_1.task.user_id}, [task_event_1]),
     ]
 

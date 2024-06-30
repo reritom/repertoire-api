@@ -1,13 +1,16 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import patch
 
 import pytest
+from fast_depends import dependency_provider
 from sqlalchemy.exc import NoResultFound
 
 import app.tasks.services.task_event_service._service as task_event_service
 from app.accounts.tests.factories import UserFactory
 from app.tasks.models.task_event import TaskEvent, TaskEventAround
 from app.tasks.schemas.task_event_schema import TaskEventCreationSchema
+from app.tasks.services.task_event_service._dependencies import get_now_datetime
+from app.tasks.services.task_event_service._utils import compute_effective_datetime
 from app.tasks.services.task_event_service.service import (
     create_task_event,
     delete_task_event,
@@ -18,21 +21,30 @@ from app.tasks.services.task_service.service import recompute_task_status
 from app.tasks.tests.factories import TaskEventFactory, TaskFactory
 
 
-def test_create_task_event_ok__today(session):
+def test_create_task_event_ok__yesterday(session):
     user = UserFactory()
     task = TaskFactory(user=user)
+    now = datetime(2020, 12, 25, 12, 0, 0)
 
-    with patch.object(
-        task_event_service,
-        "recompute_task_status",
-        wraps=recompute_task_status,
-    ) as mocked_recompute_task_status:
+    with (
+        patch.object(
+            task_event_service,
+            "recompute_task_status",
+            wraps=recompute_task_status,
+        ) as mocked_recompute_task_status,
+        patch.object(
+            task_event_service,
+            "compute_effective_datetime",
+            wraps=compute_effective_datetime,
+        ) as mocked_compute_effective_datetime,
+        dependency_provider.scope(get_now_datetime, lambda: now),
+    ):
         task_event = create_task_event(
             session=session,
             authenticated_user=user,
             task_event_creation_payload=TaskEventCreationSchema(
                 task_id=task.id,
-                around=TaskEventAround.today,
+                around=TaskEventAround.yesterday,
             ),
         )
 
@@ -41,10 +53,19 @@ def test_create_task_event_ok__today(session):
         authenticated_user=user,
         task_id=task.id,
     )
+    mocked_compute_effective_datetime.assert_called_once_with(
+        task_event_creation_payload=TaskEventCreationSchema(
+            task_id=task.id,
+            around=TaskEventAround.yesterday,
+        ),
+        created=now,
+    )
 
     assert task_event.task == task
-    assert task_event.around == TaskEventAround.today
+    assert task_event.around == TaskEventAround.yesterday
     assert task_event.at is None
+    assert task_event.created == now
+    assert task_event.effective_datetime == now - timedelta(days=1)
 
 
 def test_create_task_event_ok__specifically(session):

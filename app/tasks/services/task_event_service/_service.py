@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 
 from fast_depends import Depends, inject
@@ -9,10 +10,13 @@ from app.tasks.models.task_event import TaskEvent
 from app.tasks.schemas.task_event_schema import TaskEventCreationSchema
 from app.tasks.services._dependencies import get_task_factory
 from app.tasks.services.task_event_service._dependencies import (
+    get_now_datetime,
     get_task_event_dao,
     get_task_id_from_task_event_creation_payload,
 )
 from app.tasks.services.task_service.service import recompute_task_status
+
+from ._utils import compute_effective_datetime
 
 
 @inject(
@@ -26,11 +30,17 @@ def _create_task_event(
     task_event_creation_payload: TaskEventCreationSchema = Depends,
     # Injected
     task_event_dao: TaskEventDao = Depends(get_task_event_dao),
+    now: datetime = Depends(get_now_datetime),
 ) -> TaskEvent:
     task_event = task_event_dao.create(
         task_id=task_event_creation_payload.task_id,
         around=task_event_creation_payload.around,
         at=task_event_creation_payload.at,
+        created=now,
+        effective_datetime=compute_effective_datetime(
+            task_event_creation_payload=task_event_creation_payload,
+            created=now,
+        ),
     )
     session.commit()
     recompute_task_status(

@@ -10,16 +10,21 @@ from app.tasks.models.task_event import TaskEvent, TaskEventAround
 class TaskEventDao(BaseDao[TaskEvent]):
     class Meta:
         model = TaskEvent
+        default_order_by = (TaskEvent.effective_datetime.desc(),)
 
     def create(
         self,
         task_id: int,
         around: TaskEventAround,
+        effective_datetime: datetime,
+        created: datetime,
         at: Optional[datetime] = None,
     ) -> TaskEvent:
         task_event = TaskEvent(
             task_id=task_id,
             around=around,
+            created=created,
+            effective_datetime=effective_datetime,
             at=at,
         )
 
