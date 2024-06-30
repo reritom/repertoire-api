@@ -51,6 +51,7 @@ def _delete_task_event(
 ) -> None:
     task_event_dao.delete(id=task_event_id, user_id=authenticated_user.id)
     session.commit()
+    # TODO recompute task status here too
 
 
 @inject

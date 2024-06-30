@@ -77,3 +77,5 @@ class Task(Base):
     status: Mapped[TaskStatus] = mapped_column(
         Enum(TaskStatus), default=TaskStatus.ongoing
     )
+
+    # TODO join the most recent event and return it on the schema

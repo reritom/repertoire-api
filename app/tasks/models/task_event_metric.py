@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, Integer
+from sqlalchemy import ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -14,6 +14,11 @@ if TYPE_CHECKING:
 
 class TaskEventMetric(Base):
     __tablename__ = "task_event_metrics"
+    __table_args__ = (
+        UniqueConstraint(
+            "task_metric_id", "task_event_id", name="unique_tast_event_metric"
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
