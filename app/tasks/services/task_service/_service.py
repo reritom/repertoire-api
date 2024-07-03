@@ -49,6 +49,7 @@ def _create_task(
         type=task_creation_payload.frequency.type,
         amount=task_creation_payload.frequency.amount,
         period=task_creation_payload.frequency.period,
+        use_calendar_period=task_creation_payload.frequency.use_calendar_period,
         once_on_date=task_creation_payload.frequency.once_on_date,
         once_at_time=task_creation_payload.frequency.once_at_time,
         once_per_weekday=task_creation_payload.frequency.once_per_weekday,

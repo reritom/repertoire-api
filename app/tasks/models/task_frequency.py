@@ -3,7 +3,7 @@ from __future__ import annotations
 import enum
 from datetime import date, time
 
-from sqlalchemy import Date, Enum, Integer, Time
+from sqlalchemy import Boolean, Date, Enum, Integer, Time
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -50,6 +50,7 @@ class TaskFrequency(Base):
         Enum(FrequencyPeriod), nullable=True
     )
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
+    use_calendar_period: Mapped[bool] = mapped_column(Boolean, default=True)
     once_on_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     once_per_weekday: Mapped[Weekday | None] = mapped_column(
         Enum(Weekday), nullable=True
@@ -66,7 +67,7 @@ class TaskFrequency(Base):
             amount_representation = f"{self.amount} times"
 
         if self.type == FrequencyType.this:
-            return f"{amount_representation} this {self.period.value}"
+            return f"{amount_representation} this{' calendar' if self.use_calendar_period else ''} {self.period.value}"
 
         if self.type == FrequencyType.on:
             representation = f"Once on {_format_date(self.once_on_date)}"

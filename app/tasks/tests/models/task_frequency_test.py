@@ -13,12 +13,13 @@ from app.tasks.models.task_frequency import (
 @pytest.mark.parametrize(
     "frequency,expected_representation",
     [
-        # This
+        # This - not calendar
         (
             TaskFrequency(
                 amount=1,
                 type=FrequencyType.this,
                 period=FrequencyPeriod.week,
+                use_calendar_period=False,
             ),
             "Once this week",
         ),
@@ -27,6 +28,7 @@ from app.tasks.models.task_frequency import (
                 amount=2,
                 type=FrequencyType.this,
                 period=FrequencyPeriod.month,
+                use_calendar_period=False,
             ),
             "Twice this month",
         ),
@@ -35,8 +37,37 @@ from app.tasks.models.task_frequency import (
                 amount=3,
                 type=FrequencyType.this,
                 period=FrequencyPeriod.quarter,
+                use_calendar_period=False,
             ),
             "3 times this quarter",
+        ),
+        # This - calendar
+        (
+            TaskFrequency(
+                amount=1,
+                type=FrequencyType.this,
+                period=FrequencyPeriod.week,
+                use_calendar_period=True,
+            ),
+            "Once this calendar week",
+        ),
+        (
+            TaskFrequency(
+                amount=2,
+                type=FrequencyType.this,
+                period=FrequencyPeriod.month,
+                use_calendar_period=True,
+            ),
+            "Twice this calendar month",
+        ),
+        (
+            TaskFrequency(
+                amount=3,
+                type=FrequencyType.this,
+                period=FrequencyPeriod.quarter,
+                use_calendar_period=True,
+            ),
+            "3 times this calendar quarter",
         ),
         # On
         (

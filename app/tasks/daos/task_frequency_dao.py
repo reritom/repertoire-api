@@ -22,6 +22,7 @@ class TaskFrequencyDao(BaseDao[TaskFrequency]):
         once_on_date: Optional[date] = None,
         once_per_weekday: Optional[Weekday] = None,
         once_at_time: Optional[time] = None,
+        use_calendar_period: bool = True,
     ) -> TaskFrequency:
         frequency = TaskFrequency(
             type=type,
@@ -30,6 +31,7 @@ class TaskFrequencyDao(BaseDao[TaskFrequency]):
             once_on_date=once_on_date,
             once_per_weekday=once_per_weekday,
             once_at_time=once_at_time,
+            use_calendar_period=use_calendar_period,
         )
 
         with self.session.begin_nested():

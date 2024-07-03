@@ -24,6 +24,16 @@ class TaskFrequencySchema(BaseModel):
             ),
         ),
     ]
+    use_calendar_period: Annotated[
+        bool,
+        Field(
+            default=True,
+            description=(
+                "For 'this' types, one can either use the calendar period, "
+                "or a period starting from the date of task creation"
+            ),
+        ),
+    ]
     once_on_date: Annotated[
         _date | None,
         Field(
