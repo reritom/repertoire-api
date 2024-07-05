@@ -328,6 +328,23 @@ def test_recompute_task_status__amount_completed(
     assert session.get(Task, task.id).status == expected_status
 
 
+def test_recompute_task_status__amount_uncompleted(session):
+    task = TaskFactory(
+        status=TaskStatus.completed,
+        until__type=UntilType.amount,
+        until__amount=2,
+    )
+    TaskEventFactory(task=task)
+
+    service.recompute_task_status(
+        task_id=task.id,
+        authenticated_user=task.user,
+        session=session,
+    )
+
+    assert session.get(Task, task.id).status == TaskStatus.ongoing
+
+
 @pytest.mark.parametrize(
     "now,expected_status",
     [
