@@ -13,6 +13,7 @@ dependencies = [
     "pydantic-settings>=2.1.0",
     "psycopg2>=2.9.9",
     "fast-depends>=2.3.1",
+    "blinker>=1.8.2",
 ]
 requires-python = "==3.11.*"
 readme = "README.md"

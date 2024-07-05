@@ -166,8 +166,10 @@ def _recompute_task_status(
 ) -> None:
     task = task_dao.get(id=task_id)
     # TODO if an event is deleted, then a task could become incomplete
+    print("In recompute")
 
     if task.status == TaskStatus.completed:
+        print(f"Is completed, {task.until.type} {len(task.events)} {task.until.amount}")
         if task.until.type == UntilType.amount and len(task.events) < task.until.amount:
             # An event was probably deleted, so this task is no longer complete
             task_dao.update(

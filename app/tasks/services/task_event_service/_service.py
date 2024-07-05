@@ -14,9 +14,9 @@ from app.tasks.services.task_event_service._dependencies import (
     get_task_event_dao,
     get_task_id_from_task_event_creation_payload,
 )
-from app.tasks.services.task_service.service import recompute_task_status
 
 from ._utils import compute_effective_datetime
+from .signals import task_event_created, task_event_deleted
 
 
 @inject(
@@ -43,7 +43,7 @@ def _create_task_event(
         ),
     )
     session.commit()
-    recompute_task_status(
+    task_event_created.send(
         session=session,
         task_id=task_event.task_id,
         authenticated_user=authenticated_user,
@@ -59,9 +59,14 @@ def _delete_task_event(
     # Injected
     task_event_dao: TaskEventDao = Depends(get_task_event_dao),
 ) -> None:
+    task_event = task_event_dao.get(id=task_event_id, user_id=authenticated_user.id)
     task_event_dao.delete(id=task_event_id, user_id=authenticated_user.id)
     session.commit()
-    # TODO recompute task status here too
+    task_event_deleted.send(
+        session=session,
+        task_id=task_event.task_id,
+        authenticated_user=authenticated_user,
+    )
 
 
 @inject
