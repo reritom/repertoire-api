@@ -165,7 +165,7 @@ def _recompute_task_status(
     task_dao: TaskDao = Depends(get_task_dao),
 ) -> None:
     task = task_dao.get(id=task_id)
-
+    # TODO if an event is deleted, then a task could become incomplete
     if ((task.until.type == UntilType.date) and (now >= task.until.date)) or (
         (task.until.type == UntilType.amount)
         and (len(task.events) >= task.until.amount)

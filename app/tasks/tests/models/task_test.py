@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 from sqlalchemy.exc import IntegrityError
 
@@ -71,3 +73,35 @@ def test_delete_task_cascade_children(session):
     assert session.get(TaskFrequency, frequency.id) is None
     assert session.get(Task, task.id) is None
     assert session.get(TaskEvent, event.id) is None
+
+
+def test_task_latest_event(session):
+    task = TaskFactory()
+    event_1 = TaskEventFactory(
+        task=task, effective_datetime=datetime(2020, 12, 24, 12, 0, 0)
+    )
+    event_2 = TaskEventFactory(
+        task=task, effective_datetime=datetime(2020, 12, 26, 12, 0, 0)
+    )
+    event_3 = TaskEventFactory(
+        task=task, effective_datetime=datetime(2020, 12, 25, 12, 0, 0)
+    )
+
+    # event_3 is the latest created, but event 2 is the actual latest considering the effective datetime
+    assert task.latest_event == event_2
+
+
+def test_task_second_latest_event(session):
+    task = TaskFactory()
+    event_1 = TaskEventFactory(
+        task=task, effective_datetime=datetime(2020, 12, 24, 12, 0, 0)
+    )
+    event_2 = TaskEventFactory(
+        task=task, effective_datetime=datetime(2020, 12, 26, 12, 0, 0)
+    )
+    event_3 = TaskEventFactory(
+        task=task, effective_datetime=datetime(2020, 12, 25, 12, 0, 0)
+    )
+
+    # event_3 is the latest created, but is the second latest effective event datetime
+    assert task.second_latest_event == event_3

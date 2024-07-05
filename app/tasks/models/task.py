@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import enum
 from datetime import datetime
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 
 from sqlalchemy import Enum, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -69,7 +69,10 @@ class Task(Base):
     )
 
     events: Mapped[List[TaskEvent]] = relationship(
-        back_populates="task", cascade="all, delete-orphan"
+        back_populates="task",
+        cascade="all, delete-orphan",
+        order_by="TaskEvent.effective_datetime.desc()",
+        lazy="joined",
     )
     metrics: Mapped[List[TaskMetric]] = relationship(
         back_populates="task", cascade="all, delete-orphan"
@@ -79,11 +82,30 @@ class Task(Base):
         Enum(TaskStatus), default=TaskStatus.ongoing
     )
 
-    # TODO join the most recent event and return it on the schema
-
     @property
     def is_pausable(self) -> bool:
         return (
             self.status == TaskStatus.ongoing
             and self.frequency.type == FrequencyType.per
         )
+
+    @property
+    def latest_event(self) -> Optional[TaskEvent]:
+        # TODO join this directly as a relationship
+        try:
+            return self.events[0]
+        except IndexError:
+            return None
+
+    @property
+    def latest_event_datetime(self) -> Optional[datetime]:
+        if latest_event := self.latest_event:
+            return latest_event.effective_datetime
+
+    @property
+    def second_latest_event(self) -> Optional[TaskEvent]:
+        # TODO join this directly as a relationship
+        try:
+            return self.events[1]
+        except IndexError:
+            return None

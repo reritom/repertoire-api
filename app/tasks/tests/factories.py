@@ -6,7 +6,7 @@ from factory.declarations import LazyFunction
 from app.accounts.tests.factories import UserFactory
 from app.database import Session
 from app.tasks.models.category import Category, IconNameEnum
-from app.tasks.models.task import Task
+from app.tasks.models.task import Task, TaskStatus
 from app.tasks.models.task_event import TaskEvent, TaskEventAround
 from app.tasks.models.task_event_metric import TaskEventMetric
 from app.tasks.models.task_frequency import (
@@ -29,6 +29,7 @@ class TaskFactory(alchemy.SQLAlchemyModelFactory):
     user = SubFactory(UserFactory)
     frequency = SubFactory("app.tasks.tests.factories.TaskFrequencyFactory")
     until = SubFactory("app.tasks.tests.factories.TaskUntilFactory")
+    status = TaskStatus.ongoing
 
 
 class TaskFrequencyFactory(alchemy.SQLAlchemyModelFactory):

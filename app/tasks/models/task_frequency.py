@@ -29,7 +29,6 @@ class FrequencyPeriod(enum.Enum):
     day = "day"
     week = "week"
     month = "month"
-    quarter = "quarter"
     year = "year"
 
 
@@ -106,3 +105,21 @@ class TaskFrequency(Base):
             return representation
 
         # We won't reach here
+
+    @property
+    def is_once_per_day(self) -> bool:
+        return (
+            self.type == FrequencyType.per
+            and self.amount == 1
+            and self.period == FrequencyPeriod.day
+        )
+
+    @property
+    def is_once_per_specific_weekday(self) -> bool:
+        # TODO this could probably just check the self.once_per_weekday
+        return (
+            self.type == FrequencyType.per
+            and self.amount == 1
+            and self.period == FrequencyPeriod.week
+            and self.once_per_weekday is not None
+        )

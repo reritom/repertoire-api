@@ -103,11 +103,13 @@ class BaseDao(Generic[T_Model]):
         return query.order_by(*order_expressions)
 
     def list(self, *args, **kwargs) -> list[T_Model]:
-        return self.session.scalars(self.build_list_query(*args, **kwargs)).all()
+        return (
+            self.session.scalars(self.build_list_query(*args, **kwargs)).unique().all()
+        )
 
     def perform_get(self, query, raise_exc: bool = True) -> Optional[T_Model]:
         try:
-            return self.session.scalars(query).one()
+            return self.session.scalars(query).unique().one()
         except (NoResultFound, MultipleResultsFound) as e:
             if raise_exc:
                 raise e.__class__(f"{human_name(self.Meta.model.__name__)} not found")

@@ -32,4 +32,5 @@ class TaskEventMetric(Base):
     )
     task_event: Mapped[TaskEvent] = relationship(back_populates="metrics")
 
+    # TODO value should be Decimal not int
     value: Mapped[int] = mapped_column(Integer, nullable=False)

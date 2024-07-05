@@ -36,7 +36,7 @@ def test_create_task_ok__per__once_per_period_until_stopped(session):
             frequency=TaskFrequencyCreationSchema(
                 type=FrequencyType.per,
                 amount=1,
-                period=FrequencyPeriod.quarter,
+                period=FrequencyPeriod.month,
             ),
             until=TaskUntilCreationSchema(type=UntilType.stopped),
         ),
@@ -51,7 +51,7 @@ def test_create_task_ok__per__once_per_period_until_stopped(session):
     assert task.until.type == UntilType.stopped
     assert task.frequency.type == FrequencyType.per
     assert task.frequency.amount == 1
-    assert task.frequency.period == FrequencyPeriod.quarter
+    assert task.frequency.period == FrequencyPeriod.month
 
 
 def test_create_task_ok__per__once_per_week_on_weekday_until_stopped(session):
@@ -102,7 +102,7 @@ def test_create_task_failure_category_not_visible(session):
                 frequency=TaskFrequencyCreationSchema(
                     type=FrequencyType.per,
                     amount=1,
-                    period=FrequencyPeriod.quarter,
+                    period=FrequencyPeriod.month,
                 ),
                 until=TaskUntilCreationSchema(type=UntilType.completed),
             ),
@@ -123,7 +123,7 @@ def test_create_task_failure_duplicate_name(session):
                 frequency=TaskFrequencyCreationSchema(
                     type=FrequencyType.per,
                     amount=1,
-                    period=FrequencyPeriod.quarter,
+                    period=FrequencyPeriod.month,
                 ),
                 until=TaskUntilCreationSchema(type=UntilType.completed),
             ),

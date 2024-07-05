@@ -36,10 +36,10 @@ from app.tasks.models.task_frequency import (
             TaskFrequency(
                 amount=3,
                 type=FrequencyType.this,
-                period=FrequencyPeriod.quarter,
                 use_calendar_period=False,
+                period=FrequencyPeriod.year,
             ),
-            "3 times this quarter",
+            "3 times this year",
         ),
         # This - calendar
         (
@@ -64,10 +64,10 @@ from app.tasks.models.task_frequency import (
             TaskFrequency(
                 amount=3,
                 type=FrequencyType.this,
-                period=FrequencyPeriod.quarter,
+                period=FrequencyPeriod.year,
                 use_calendar_period=True,
             ),
-            "3 times this calendar quarter",
+            "3 times this calendar year",
         ),
         # On
         (
@@ -164,14 +164,6 @@ from app.tasks.models.task_frequency import (
                 period=FrequencyPeriod.month,
             ),
             "Twice per month",
-        ),
-        (
-            TaskFrequency(
-                amount=2,
-                type=FrequencyType.per,
-                period=FrequencyPeriod.quarter,
-            ),
-            "Twice per quarter",
         ),
         (
             TaskFrequency(
