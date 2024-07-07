@@ -231,7 +231,10 @@ def test_get_tasks_filter_category_id(session, subtests):
 
 
 def test_pause_task_ok(session):
-    task = TaskFactory(status=TaskStatus.ongoing)
+    task = TaskFactory(
+        status=TaskStatus.ongoing,
+        next_event_datetime=datetime(2020, 12, 25, 12, 0, 0),
+    )
 
     service.pause_task(
         authenticated_user=task.user,
@@ -241,6 +244,7 @@ def test_pause_task_ok(session):
 
     session.refresh(task)
     assert task.status == TaskStatus.paused
+    assert task.next_event_datetime is None
 
 
 def test_pause_task_failure_not_visible_to_user(session):
@@ -265,6 +269,47 @@ def test_pause_task_failure_task_not_ongoing(session):
         )
 
     assert ctx.value.args[0] == "Cannot pause a task that isn't ongoing"
+
+
+def test_unpause_task_ok(session):
+    task = TaskFactory(
+        status=TaskStatus.paused,
+        next_event_datetime=None,
+    )
+
+    service.unpause_task(
+        authenticated_user=task.user,
+        task_id=task.id,
+        session=session,
+    )
+
+    session.refresh(task)
+    assert task.status == TaskStatus.ongoing
+    assert task.next_event_datetime is not None
+
+
+def test_unpause_task_failure_not_visible_to_user(session):
+    task = TaskFactory(status=TaskStatus.paused)
+
+    with pytest.raises(NoResultFound):
+        service.unpause_task(
+            authenticated_user=UserFactory(),
+            task_id=task.id,
+            session=session,
+        )
+
+
+def test_unpause_task_failure_task_not_paused(session):
+    task = TaskFactory(status=TaskStatus.ongoing)
+
+    with pytest.raises(ServiceValidationError) as ctx:
+        service.unpause_task(
+            authenticated_user=task.user,
+            task_id=task.id,
+            session=session,
+        )
+
+    assert ctx.value.args[0] == "Cannot unpause a task that isn't paused"
 
 
 def test_complete_task_ok(session):

@@ -11,6 +11,7 @@ from app.tasks.daos.task_frequency_dao import TaskFrequencyDao
 from app.tasks.daos.task_until_dao import TaskUntilDao
 from app.tasks.models.task import Task, TaskStatus
 from app.tasks.schemas.task_schema import TaskCreationSchema
+from app.tasks.services._dependencies import get_task as get_task_dependency
 from app.tasks.services._dependencies import get_task_dao
 from app.tasks.services.task_service._dependencies import (
     get_date_now,
@@ -129,6 +130,7 @@ def _pause_task(
         id=task_id,
         user_id=authenticated_user.id,
         status=TaskStatus.paused,
+        next_event_datetime=None,
     )
     session.commit()
 
@@ -136,15 +138,20 @@ def _pause_task(
 @inject(extra_dependencies=[Depends(validate_task_status_for_unpause)])
 def _unpause_task(
     session: SessionType = Depends,
-    task_id: int = Depends,
     authenticated_user: User = Depends,
     # Injected
     task_dao: TaskDao = Depends(get_task_dao),
+    task: Task = Depends(get_task_dependency),
+    now: datetime = Depends(get_datetime_now),
 ) -> None:
+    # Need to dummy set the task as ongoing else the state computation will be skipped
+    task.status = TaskStatus.ongoing
+    status, next_event_datetime = compute_task_state(task=task, now=now)
     task_dao.update(
-        id=task_id,
+        id=task.id,
         user_id=authenticated_user.id,
-        status=TaskStatus.ongoing,
+        status=status,
+        next_event_datetime=next_event_datetime,
     )
     session.commit()
 
@@ -163,6 +170,7 @@ def _complete_task(
         user_id=authenticated_user.id,
         status=TaskStatus.completed,
         manually_completed_at=now,
+        next_event_datetime=None,
     )
     session.commit()
 
