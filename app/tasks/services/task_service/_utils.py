@@ -5,6 +5,7 @@ from typing import Callable, Dict, Optional
 
 from app.tasks.models.task import Task, TaskStatus
 from app.tasks.models.task_frequency import FrequencyPeriod, FrequencyType, Weekday
+from app.tasks.models.task_until import UntilType
 
 period_to_days: Dict[FrequencyPeriod, int] = {
     FrequencyPeriod.day: 1,
@@ -189,3 +190,23 @@ def compute_approximated_next_event_datetime(task: Task) -> Optional[datetime]:
         FrequencyType.per: _compute_approximated_next_event_datetime_for__per,
         FrequencyType.this: _compute_approximated_next_event_datetime_for__this,
     }[task.frequency.type](task=task)
+
+
+def compute_task_status(task: Task, now: datetime) -> TaskStatus:
+    if task.status == TaskStatus.paused:
+        return TaskStatus.paused
+
+    if task.manually_completed_at:
+        return TaskStatus.completed
+
+    if task.until.type == UntilType.amount:
+        return (
+            TaskStatus.ongoing
+            if len(task.events) < task.until.amount
+            else TaskStatus.completed
+        )
+
+    if task.until.type == UntilType.date:
+        return TaskStatus.ongoing if now < task.until.date else TaskStatus.completed
+
+    return TaskStatus.ongoing

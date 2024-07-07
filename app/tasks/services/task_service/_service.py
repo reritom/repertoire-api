@@ -10,7 +10,6 @@ from app.tasks.daos.task_dao import TaskDao
 from app.tasks.daos.task_frequency_dao import TaskFrequencyDao
 from app.tasks.daos.task_until_dao import TaskUntilDao
 from app.tasks.models.task import Task, TaskStatus
-from app.tasks.models.task_until import UntilType
 from app.tasks.schemas.task_schema import TaskCreationSchema
 from app.tasks.services._dependencies import get_task_dao
 from app.tasks.services.task_service._dependencies import (
@@ -23,6 +22,7 @@ from app.tasks.services.task_service._dependencies import (
     validate_task_status_for_pause,
     validate_task_status_for_unpause,
 )
+from app.tasks.services.task_service._utils import compute_task_status
 
 
 @inject(
@@ -167,30 +167,11 @@ def _recompute_task_status(
     task_dao: TaskDao = Depends(get_task_dao),
 ) -> None:
     task = task_dao.get(id=task_id)
-    # TODO if an event is deleted, then a task could become incomplete
-    print("In recompute")
-    if task.manually_completed_at is not None:
-        return
-
-    if task.status == TaskStatus.completed:
-        print(f"Is completed, {task.until.type} {len(task.events)} {task.until.amount}")
-        if task.until.type == UntilType.amount and len(task.events) < task.until.amount:
-            # An event was probably deleted, so this task is no longer complete
-            task_dao.update(
-                id=task_id,
-                user_id=authenticated_user.id,
-                status=TaskStatus.ongoing,
-            )
-            session.commit()
-
-    elif task.status != TaskStatus.completed:
-        if ((task.until.type == UntilType.date) and (now >= task.until.date)) or (
-            (task.until.type == UntilType.amount)
-            and (len(task.events) >= task.until.amount)
-        ):
-            task_dao.update(
-                id=task_id,
-                user_id=authenticated_user.id,
-                status=TaskStatus.completed,
-            )
-            session.commit()
+    status = compute_task_status(task, now=now)
+    if status != task.status:
+        task_dao.update(
+            id=task_id,
+            user_id=authenticated_user.id,
+            status=status,
+        )
+        session.commit()

@@ -3,9 +3,12 @@ from typing import List, Optional, Union
 
 import pytest
 
+from app.tasks.models.task import TaskStatus
 from app.tasks.models.task_frequency import FrequencyPeriod, FrequencyType, Weekday
+from app.tasks.models.task_until import UntilType
 from app.tasks.services.task_service._utils import (
     compute_approximated_next_event_datetime,
+    compute_task_status,
     get_end_of_current_period,
 )
 from app.tasks.tests.factories import (
@@ -662,3 +665,181 @@ def test_compute_approximated_next_event_datetime(
             )
     computed = compute_approximated_next_event_datetime(task=task)
     assert computed == expected_next_event_datetime
+
+
+@pytest.mark.parametrize(
+    "desc,task_factory,optional_events_count,optional_now_datetime,expected_status",
+    [
+        (
+            "Amount - Amount not reached",
+            lambda: TaskFactory(
+                status=TaskStatus.ongoing,
+                until__type=UntilType.amount,
+                until__amount=2,
+            ),
+            1,
+            None,
+            TaskStatus.ongoing,
+        ),
+        (
+            "Amount - Amount not reached but manually completed",
+            lambda: TaskFactory(
+                status=TaskStatus.completed,
+                manually_completed_at=datetime(2020, 12, 25, 12, 0, 0),
+                until__type=UntilType.amount,
+                until__amount=2,
+            ),
+            1,
+            None,
+            TaskStatus.completed,
+        ),
+        (
+            "Amount - Amount not reached but paused",
+            lambda: TaskFactory(
+                status=TaskStatus.paused,
+                until__type=UntilType.amount,
+                until__amount=2,
+            ),
+            1,
+            None,
+            TaskStatus.paused,
+        ),
+        (
+            "Amount - Amount reached",
+            lambda: TaskFactory(
+                status=TaskStatus.ongoing,
+                until__type=UntilType.amount,
+                until__amount=2,
+            ),
+            2,
+            None,
+            TaskStatus.completed,
+        ),
+        (
+            "Amount - Amount exceeded",
+            lambda: TaskFactory(
+                status=TaskStatus.ongoing,
+                until__type=UntilType.amount,
+                until__amount=2,
+            ),
+            3,
+            None,
+            TaskStatus.completed,
+        ),
+        (
+            "Date - Date not reached",
+            lambda: TaskFactory(
+                status=TaskStatus.ongoing,
+                until__type=UntilType.date,
+                until__date=date(2025, 12, 20),
+            ),
+            None,
+            date(2024, 12, 20),
+            TaskStatus.ongoing,
+        ),
+        (
+            "Date - Date not reached but manually completed",
+            lambda: TaskFactory(
+                status=TaskStatus.ongoing,
+                until__type=UntilType.date,
+                until__date=date(2025, 12, 20),
+                manually_completed_at=datetime(2024, 12, 25, 12, 0, 0),
+            ),
+            None,
+            date(2024, 12, 20),
+            TaskStatus.completed,
+        ),
+        (
+            "Date - Date not reached but paused",
+            lambda: TaskFactory(
+                status=TaskStatus.paused,
+                until__type=UntilType.date,
+                until__date=date(2025, 12, 20),
+            ),
+            None,
+            date(2024, 12, 20),
+            TaskStatus.paused,
+        ),
+        (
+            "Date - Date reached",
+            lambda: TaskFactory(
+                status=TaskStatus.ongoing,
+                until__type=UntilType.date,
+                until__date=date(2025, 12, 20),
+            ),
+            None,
+            date(2025, 12, 20),
+            TaskStatus.completed,
+        ),
+        (
+            "Date - Date exceeded",
+            lambda: TaskFactory(
+                status=TaskStatus.ongoing,
+                until__type=UntilType.date,
+                until__date=date(2025, 12, 20),
+            ),
+            None,
+            date(2026, 12, 20),
+            TaskStatus.completed,
+        ),
+        (
+            "Stopped - Not completed",
+            lambda: TaskFactory(
+                status=TaskStatus.ongoing,
+                until__type=UntilType.stopped,
+            ),
+            None,
+            None,
+            TaskStatus.ongoing,
+        ),
+        (
+            "Stopped - Manually completed",
+            lambda: TaskFactory(
+                status=TaskStatus.completed,
+                until__type=UntilType.stopped,
+                manually_completed_at=datetime(2024, 12, 25, 12, 0, 0),
+            ),
+            None,
+            None,
+            TaskStatus.completed,
+        ),
+        (
+            "Completed - Not completed",
+            lambda: TaskFactory(
+                status=TaskStatus.ongoing,
+                until__type=UntilType.completed,
+            ),
+            None,
+            None,
+            TaskStatus.ongoing,
+        ),
+        (
+            "Completed - Manually completed",
+            lambda: TaskFactory(
+                status=TaskStatus.completed,
+                until__type=UntilType.completed,
+                manually_completed_at=datetime(2024, 12, 25, 12, 0, 0),
+            ),
+            None,
+            None,
+            TaskStatus.completed,
+        ),
+    ],
+)
+def test_compute_task_status(
+    desc,
+    task_factory,
+    optional_events_count,
+    optional_now_datetime,
+    expected_status,
+    session,
+):
+    task = task_factory()
+    if optional_events_count:
+        TaskEventFactory.create_batch(optional_events_count, task=task)
+
+    status = compute_task_status(
+        task=task, now=optional_now_datetime or datetime.utcnow()
+    )
+
+    assert status == expected_status

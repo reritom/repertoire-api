@@ -1,7 +1,6 @@
-from datetime import date, datetime, time
+from datetime import time
 
 import pytest
-from fast_depends import dependency_provider
 from sqlalchemy.exc import NoResultFound
 
 from app.accounts.tests.factories import UserFactory
@@ -19,7 +18,6 @@ from app.tasks.schemas.task_schema import (
     TaskUntilCreationSchema,
 )
 from app.tasks.services.task_service import service
-from app.tasks.services.task_service._dependencies import get_date_now
 from app.tasks.tests.factories import CategoryFactory, TaskEventFactory, TaskFactory
 
 
@@ -275,6 +273,7 @@ def test_complete_task_ok(session):
 
     session.refresh(task)
     assert task.status == TaskStatus.completed
+    assert task.manually_completed_at is not None
 
 
 def test_complete_task_failure_not_visible_to_user(session):
@@ -301,42 +300,13 @@ def test_complete_task_failure_task_not_ongoing(session):
     assert ctx.value.args[0] == "The task is already completed"
 
 
-@pytest.mark.parametrize(
-    "amount_of_events,expected_status",
-    [
-        (1, TaskStatus.ongoing),
-        (2, TaskStatus.completed),
-        (3, TaskStatus.completed),
-    ],
-)
-def test_recompute_task_status__amount_completed(
-    session, amount_of_events, expected_status
-):
+def test_recompute_task_status_ok(session):
     task = TaskFactory(
         status=TaskStatus.ongoing,
         until__type=UntilType.amount,
         until__amount=2,
     )
-    TaskEventFactory.create_batch(amount_of_events, task=task)
-
-    service.recompute_task_status(
-        task_id=task.id,
-        authenticated_user=task.user,
-        session=session,
-    )
-
-    assert session.get(Task, task.id).status == expected_status
-
-
-def test_recompute_task_status__ignore_as_manually_completed(session):
-    task = TaskFactory(
-        status=TaskStatus.completed,
-        until__type=UntilType.amount,
-        until__amount=2,
-        manually_completed_at=datetime(2012, 12, 25, 12, 0, 0),
-    )
-    TaskEventFactory(task=task)
-    # This would normally be updated to be uncompleted, but we dont because it was manually completed
+    TaskEventFactory.create_batch(2, task=task)
 
     service.recompute_task_status(
         task_id=task.id,
@@ -345,45 +315,3 @@ def test_recompute_task_status__ignore_as_manually_completed(session):
     )
 
     assert session.get(Task, task.id).status == TaskStatus.completed
-
-
-def test_recompute_task_status__amount_uncompleted(session):
-    task = TaskFactory(
-        status=TaskStatus.completed,
-        until__type=UntilType.amount,
-        until__amount=2,
-    )
-    TaskEventFactory(task=task)
-
-    service.recompute_task_status(
-        task_id=task.id,
-        authenticated_user=task.user,
-        session=session,
-    )
-
-    assert session.get(Task, task.id).status == TaskStatus.ongoing
-
-
-@pytest.mark.parametrize(
-    "now,expected_status",
-    [
-        (date(2020, 12, 24), TaskStatus.ongoing),
-        (date(2020, 12, 25), TaskStatus.completed),
-        (date(2020, 12, 26), TaskStatus.completed),
-    ],
-)
-def test_recompute_task_status__date_passed(session, now, expected_status):
-    task = TaskFactory(
-        status=TaskStatus.ongoing,
-        until__type=UntilType.date,
-        until__date=date(2020, 12, 25),
-    )
-
-    with dependency_provider.scope(get_date_now, lambda: now):
-        service.recompute_task_status(
-            task_id=task.id,
-            authenticated_user=task.user,
-            session=session,
-        )
-
-    assert session.get(Task, task.id).status == expected_status
