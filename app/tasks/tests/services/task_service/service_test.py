@@ -1,6 +1,8 @@
-from datetime import time
+from datetime import datetime, time
+from unittest.mock import patch
 
 import pytest
+from fast_depends import dependency_provider
 from sqlalchemy.exc import NoResultFound
 
 from app.accounts.tests.factories import UserFactory
@@ -17,8 +19,9 @@ from app.tasks.schemas.task_schema import (
     TaskFrequencyCreationSchema,
     TaskUntilCreationSchema,
 )
-from app.tasks.services.task_service import service
-from app.tasks.tests.factories import CategoryFactory, TaskEventFactory, TaskFactory
+from app.tasks.services.task_service import _service, service
+from app.tasks.services.task_service._dependencies import get_datetime_now
+from app.tasks.tests.factories import CategoryFactory, TaskFactory
 
 
 def test_create_task_ok__per__once_per_period_until_stopped(session):
@@ -50,6 +53,8 @@ def test_create_task_ok__per__once_per_period_until_stopped(session):
     assert task.frequency.type == FrequencyType.per
     assert task.frequency.amount == 1
     assert task.frequency.period == FrequencyPeriod.month
+    assert task.next_event_datetime is not None
+    assert task.status == TaskStatus.ongoing
 
 
 def test_create_task_ok__per__once_per_week_on_weekday_until_stopped(session):
@@ -300,18 +305,25 @@ def test_complete_task_failure_task_not_ongoing(session):
     assert ctx.value.args[0] == "The task is already completed"
 
 
-def test_recompute_task_status_ok(session):
+@patch.object(
+    _service,
+    "compute_task_state",
+    autospec=True,
+    return_value=(TaskStatus.ongoing, datetime(2021, 12, 25, 12, 0, 0)),
+)
+def test_recompute_task_state_ok(m_compute_task_state, session):
     task = TaskFactory(
-        status=TaskStatus.ongoing,
-        until__type=UntilType.amount,
-        until__amount=2,
-    )
-    TaskEventFactory.create_batch(2, task=task)
-
-    service.recompute_task_status(
-        task_id=task.id,
-        authenticated_user=task.user,
-        session=session,
+        status=TaskStatus.completed,
     )
 
-    assert session.get(Task, task.id).status == TaskStatus.completed
+    now = datetime(2022, 12, 20, 12, 0, 0)
+
+    with dependency_provider.scope(get_datetime_now, lambda: now):
+        service.recompute_task_state(
+            task_id=task.id,
+            authenticated_user=task.user,
+            session=session,
+        )
+
+    assert session.get(Task, task.id).status == TaskStatus.ongoing
+    m_compute_task_state.assert_called_once_with(task=task, now=now)

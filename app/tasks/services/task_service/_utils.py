@@ -1,7 +1,7 @@
 import math
 import operator
 from datetime import date, datetime, time, timedelta
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, Optional, Tuple
 
 from app.tasks.models.task import Task, TaskStatus
 from app.tasks.models.task_frequency import FrequencyPeriod, FrequencyType, Weekday
@@ -62,12 +62,11 @@ def get_end_of_current_period(period: FrequencyPeriod, current_date: date) -> da
 
 def _compute_approximated_next_event_datetime_for__this(
     task: Task,
-) -> Optional[datetime]:
+) -> datetime:
     remaining_events: int = task.frequency.amount - len(task.events)
 
-    if remaining_events < 1:
-        # This shouldn't happen because we should validate ongoing status prior to this
-        return None
+    # This shouldn't happen because we should validate ongoing status prior to this
+    assert remaining_events >= 1
 
     end_datetime: datetime = (
         get_end_of_current_period(
@@ -89,12 +88,12 @@ def _compute_approximated_next_event_datetime_for__this(
 
 def _compute_approximated_next_event_datetime_for__on(
     task: Task,
-) -> Optional[datetime]:
+) -> datetime:
     """Either the precise date of the event if the time is provided, else
     we choose the end of the day."""
-    if len(task.events) > 0:
-        # This shouldn't happen because we should validate ongoing status prior to this
-        return None
+
+    # This shouldn't happen because we should validate ongoing status prior to this
+    assert len(task.events) == 0
 
     on_datetime = datetime.combine(task.frequency.once_on_date, time(0, 0))
     on_datetime = on_datetime + (
@@ -178,13 +177,7 @@ def _compute_approximated_next_event_datetime_for__per(
         )
 
 
-def compute_approximated_next_event_datetime(task: Task) -> Optional[datetime]:
-    if task.status != TaskStatus.ongoing:
-        return
-
-    # TODO if the next datetime is after the end date of the task, then
-    # it should be None
-
+def compute_approximated_next_event_datetime(task: Task) -> datetime:
     return {
         FrequencyType.on: _compute_approximated_next_event_datetime_for__on,
         FrequencyType.per: _compute_approximated_next_event_datetime_for__per,
@@ -210,3 +203,16 @@ def compute_task_status(task: Task, now: datetime) -> TaskStatus:
         return TaskStatus.ongoing if now < task.until.date else TaskStatus.completed
 
     return TaskStatus.ongoing
+
+
+def compute_task_state(
+    task: Task, now: datetime
+) -> Tuple[TaskStatus, Optional[datetime]]:
+    """Compute the task status and next event datetime for the given task"""
+    status = compute_task_status(task=task, now=now)
+    next_event_datetime = (
+        compute_approximated_next_event_datetime(task=task)
+        if status == TaskStatus.ongoing
+        else None
+    )
+    return (status, next_event_datetime)

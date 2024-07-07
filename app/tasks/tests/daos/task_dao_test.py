@@ -67,6 +67,16 @@ def test_create_task_failure_duplicate_name(session):
     assert "unique_user_task_name" in ctx.value.args[0]
 
 
+def test_query_default_order_by(session):
+    task_0 = TaskFactory(next_event_datetime=None)
+    task_1 = TaskFactory(next_event_datetime=datetime(2020, 12, 25, 12, 0, 0))
+    task_2 = TaskFactory(next_event_datetime=datetime(2020, 12, 24, 12, 0, 0))
+    task_4 = TaskFactory(next_event_datetime=None)
+
+    tasks = TaskDao(session=session).list()
+    assert tasks == [task_2, task_1, task_0, task_4]
+
+
 def test_query_filter_by_name(session, subtests):
     task_1 = TaskFactory()
     task_2 = TaskFactory()
@@ -179,6 +189,20 @@ def test_update_manually_completed_at_ok(session):
     session.refresh(task)
 
     assert task.manually_completed_at == datetime(2012, 12, 25, 12, 0, 0)
+
+
+def test_update_next_event_datetime_ok(session):
+    task = TaskFactory(next_event_datetime=None)
+
+    TaskDao(session=session).update(
+        id=task.id,
+        user_id=task.user_id,
+        next_event_datetime=datetime(2012, 12, 25, 12, 0, 0),
+    )
+
+    session.refresh(task)
+
+    assert task.next_event_datetime == datetime(2012, 12, 25, 12, 0, 0)
 
 
 def test_delete_ok(session):

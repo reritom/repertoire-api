@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import List, Optional
 
 from fast_depends import Depends, inject
@@ -14,6 +14,7 @@ from app.tasks.schemas.task_schema import TaskCreationSchema
 from app.tasks.services._dependencies import get_task_dao
 from app.tasks.services.task_service._dependencies import (
     get_date_now,
+    get_datetime_now,
     get_task_frequency_dao,
     get_task_until_dao,
     validate_category_is_visible_for_task_creation,
@@ -22,7 +23,9 @@ from app.tasks.services.task_service._dependencies import (
     validate_task_status_for_pause,
     validate_task_status_for_unpause,
 )
-from app.tasks.services.task_service._utils import compute_task_status
+from app.tasks.services.task_service._utils import (
+    compute_task_state,
+)
 
 
 @inject(
@@ -39,6 +42,7 @@ def _create_task(
     task_dao: TaskDao = Depends(get_task_dao),
     task_frequency_dao: TaskFrequencyDao = Depends(get_task_frequency_dao),
     task_until_dao: TaskUntilDao = Depends(get_task_until_dao),
+    now: datetime = Depends(get_datetime_now),
 ) -> Task:
     until = task_until_dao.create(
         type=task_creation_payload.until.type,
@@ -62,7 +66,13 @@ def _create_task(
         until_id=until.id,
         user_id=authenticated_user.id,
     )
-
+    status, next_event_datetime = compute_task_state(task=task, now=now)
+    task_dao.update(
+        id=task.id,
+        user_id=authenticated_user.id,
+        status=status,
+        next_event_datetime=next_event_datetime,
+    )
     session.commit()
     return task
 
@@ -158,20 +168,20 @@ def _complete_task(
 
 
 @inject
-def _recompute_task_status(
+def _recompute_task_state(
     session: SessionType = Depends,
     task_id: int = Depends,
     authenticated_user: User = Depends,
     # Injected
-    now: date = Depends(get_date_now),
+    now: datetime = Depends(get_datetime_now),
     task_dao: TaskDao = Depends(get_task_dao),
 ) -> None:
     task = task_dao.get(id=task_id)
-    status = compute_task_status(task, now=now)
-    if status != task.status:
-        task_dao.update(
-            id=task_id,
-            user_id=authenticated_user.id,
-            status=status,
-        )
-        session.commit()
+    status, next_event_datetime = compute_task_state(task=task, now=now)
+    task_dao.update(
+        id=task_id,
+        user_id=authenticated_user.id,
+        status=status,
+        next_event_datetime=next_event_datetime,
+    )
+    session.commit()

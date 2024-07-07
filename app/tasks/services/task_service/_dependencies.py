@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Annotated
 
 from fast_depends import Depends
@@ -82,3 +82,7 @@ def get_task_until_dao(session: SessionType = Depends) -> TaskUntilDao:
 
 def get_date_now() -> date:
     return date.today()
+
+
+def get_datetime_now() -> datetime:
+    return datetime.utcnow()

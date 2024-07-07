@@ -45,6 +45,7 @@ class Task(Base):
 
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str] = mapped_column(String(100), nullable=False)
+    next_event_datetime: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     frequency_id: Mapped[int] = mapped_column(
         ForeignKey("task_frequencies.id"),

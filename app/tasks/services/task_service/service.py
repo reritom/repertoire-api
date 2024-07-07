@@ -15,7 +15,7 @@ from ._service import (
     _get_task,
     _get_tasks,
     _pause_task,
-    _recompute_task_status,
+    _recompute_task_state,
     _unpause_task,
 )
 
@@ -106,12 +106,12 @@ def complete_task(
     )
 
 
-def recompute_task_status(
+def recompute_task_state(
     session: SessionType,
     authenticated_user: User,
     task_id: int,
 ) -> None:
-    return _recompute_task_status(
+    return _recompute_task_state(
         session=session,
         task_id=task_id,
         authenticated_user=authenticated_user,

@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Optional
 
+from sqlalchemy import nulls_last
+
 from app.shared.dao import BaseDao
 from app.shared.sentinels import NO_FILTER, NO_OP, OptionalAction, OptionalFilter
 from app.tasks.models.task import Task, TaskStatus
@@ -9,6 +11,10 @@ from app.tasks.models.task import Task, TaskStatus
 class TaskDao(BaseDao[Task]):
     class Meta:
         model = Task
+        default_order_by = (
+            nulls_last(Task.next_event_datetime.asc()),
+            Task.id.asc(),
+        )
 
     def create(
         self,
@@ -67,6 +73,7 @@ class TaskDao(BaseDao[Task]):
         user_id: int,
         status: OptionalAction[TaskStatus] = NO_OP,
         manually_completed_at: Optional[datetime] = NO_OP,
+        next_event_datetime: OptionalAction[datetime] = NO_OP,
     ):
         task = self.get(id=id, user_id=user_id)
 
@@ -77,6 +84,11 @@ class TaskDao(BaseDao[Task]):
 
         if manually_completed_at != NO_OP:
             task.manually_completed_at = manually_completed_at
+            self.session.add(task)
+            self.session.flush()
+
+        if next_event_datetime != NO_OP:
+            task.next_event_datetime = next_event_datetime
             self.session.add(task)
             self.session.flush()
 

@@ -1,6 +1,6 @@
 from datetime import date as _date
 from datetime import datetime, time
-from typing import Annotated
+from typing import Annotated, Optional
 
 from pydantic import model_validator
 from pydantic.fields import Field
@@ -188,3 +188,4 @@ class TaskSchema(TaskCreationSchema):
     created: datetime
     frequency: TaskFrequencySchema
     until: TaskUntilSchema
+    next_event_datetime: Optional[datetime] = None

@@ -54,17 +54,6 @@ def test_get_end_of_current_period(period, current_date, expected_datetime):
     "desc,task_factory,optional_previous_event_datetimes,expected_next_event_datetime",
     [
         (
-            "On - already done",
-            lambda: TaskFactory(
-                frequency=TaskFrequencyFactory(
-                    type=FrequencyType.on,
-                    once_on_date=date(2020, 12, 25),
-                )
-            ),
-            datetime(2020, 12, 25, 12, 0, 0),
-            None,
-        ),
-        (
             "On - date",
             lambda: TaskFactory(
                 frequency=TaskFrequencyFactory(
@@ -86,20 +75,6 @@ def test_get_end_of_current_period(period, current_date, expected_datetime):
             ),
             None,
             datetime(2020, 12, 25, 12, 20, 0),
-        ),
-        (
-            "This - already completed",
-            lambda: TaskFactory(
-                created=datetime(2020, 12, 25, 12, 0, 0),
-                frequency=TaskFrequencyFactory(
-                    type=FrequencyType.this,
-                    period=FrequencyPeriod.day,
-                    amount=1,
-                    use_calendar_period=True,
-                ),
-            ),
-            datetime(2020, 12, 25, 12, 0, 0),
-            None,
         ),
         (
             "This - just created - once this calendar day",
