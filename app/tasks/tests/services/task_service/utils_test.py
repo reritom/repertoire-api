@@ -709,7 +709,7 @@ def test_compute_approximated_next_event_datetime(
                 until__date=date(2025, 12, 20),
             ),
             None,
-            date(2024, 12, 20),
+            datetime(2024, 12, 20, 12, 0, 0),
             TaskStatus.ongoing,
         ),
         (
@@ -721,7 +721,7 @@ def test_compute_approximated_next_event_datetime(
                 manually_completed_at=datetime(2024, 12, 25, 12, 0, 0),
             ),
             None,
-            date(2024, 12, 20),
+            datetime(2024, 12, 20, 12, 0, 0),
             TaskStatus.completed,
         ),
         (
@@ -732,7 +732,7 @@ def test_compute_approximated_next_event_datetime(
                 until__date=date(2025, 12, 20),
             ),
             None,
-            date(2024, 12, 20),
+            datetime(2024, 12, 20, 12, 0, 0),
             TaskStatus.paused,
         ),
         (
@@ -743,7 +743,7 @@ def test_compute_approximated_next_event_datetime(
                 until__date=date(2025, 12, 20),
             ),
             None,
-            date(2025, 12, 20),
+            datetime(2025, 12, 20, 12, 0, 0),
             TaskStatus.completed,
         ),
         (
@@ -754,7 +754,7 @@ def test_compute_approximated_next_event_datetime(
                 until__date=date(2025, 12, 20),
             ),
             None,
-            date(2026, 12, 20),
+            datetime(2026, 12, 20, 12, 0, 0),
             TaskStatus.completed,
         ),
         (

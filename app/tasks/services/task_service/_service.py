@@ -10,7 +10,13 @@ from app.tasks.daos.task_dao import TaskDao
 from app.tasks.daos.task_frequency_dao import TaskFrequencyDao
 from app.tasks.daos.task_until_dao import TaskUntilDao
 from app.tasks.models.task import Task, TaskStatus
-from app.tasks.schemas.task_schema import TaskCreationSchema
+from app.tasks.models.task_frequency import TaskFrequency
+from app.tasks.models.task_until import TaskUntil
+from app.tasks.schemas.task_schema import (
+    TaskCreationSchema,
+    TaskFrequencyCreationSchema,
+    TaskUntilCreationSchema,
+)
 from app.tasks.services._dependencies import get_task as get_task_dependency
 from app.tasks.services._dependencies import get_task_dao
 from app.tasks.services.task_service._dependencies import (
@@ -27,6 +33,7 @@ from app.tasks.services.task_service._dependencies import (
 from app.tasks.services.task_service._utils import (
     compute_task_state,
 )
+from app.tasks.services.task_service.signals import task_updated
 
 
 @inject(
@@ -41,23 +48,14 @@ def _create_task(
     task_creation_payload: TaskCreationSchema,
     # Injected
     task_dao: TaskDao = Depends(get_task_dao),
-    task_frequency_dao: TaskFrequencyDao = Depends(get_task_frequency_dao),
-    task_until_dao: TaskUntilDao = Depends(get_task_until_dao),
-    now: datetime = Depends(get_datetime_now),
 ) -> Task:
-    until = task_until_dao.create(
-        type=task_creation_payload.until.type,
-        amount=task_creation_payload.until.amount,
-        date=task_creation_payload.until.date,
+    until = _create_until(
+        session=session,
+        until_creation_payload=task_creation_payload.until,
     )
-    frequency = task_frequency_dao.create(
-        type=task_creation_payload.frequency.type,
-        amount=task_creation_payload.frequency.amount,
-        period=task_creation_payload.frequency.period,
-        use_calendar_period=task_creation_payload.frequency.use_calendar_period,
-        once_on_date=task_creation_payload.frequency.once_on_date,
-        once_at_time=task_creation_payload.frequency.once_at_time,
-        once_per_weekday=task_creation_payload.frequency.once_per_weekday,
+    frequency = _create_frequency(
+        frequency_creation_payload=task_creation_payload.frequency,
+        session=session,
     )
     task = task_dao.create(
         name=task_creation_payload.name,
@@ -67,14 +65,13 @@ def _create_task(
         until_id=until.id,
         user_id=authenticated_user.id,
     )
-    status, next_event_datetime = compute_task_state(task=task, now=now)
-    task_dao.update(
-        id=task.id,
-        user_id=authenticated_user.id,
-        status=status,
-        next_event_datetime=next_event_datetime,
-    )
     session.commit()
+    task_updated.send(
+        session=session,
+        task_id=task.id,
+        authenticated_user=authenticated_user,
+    )
+    session.refresh(task)
     return task
 
 
@@ -142,18 +139,18 @@ def _unpause_task(
     # Injected
     task_dao: TaskDao = Depends(get_task_dao),
     task: Task = Depends(get_task_dependency),
-    now: datetime = Depends(get_datetime_now),
 ) -> None:
-    # Need to dummy set the task as ongoing else the state computation will be skipped
-    task.status = TaskStatus.ongoing
-    status, next_event_datetime = compute_task_state(task=task, now=now)
     task_dao.update(
         id=task.id,
         user_id=authenticated_user.id,
-        status=status,
-        next_event_datetime=next_event_datetime,
+        status=TaskStatus.ongoing,
     )
     session.commit()
+    task_updated.send(
+        session=session,
+        task_id=task.id,
+        authenticated_user=authenticated_user,
+    )
 
 
 @inject(extra_dependencies=[Depends(validate_task_status_for_completion)])
@@ -193,3 +190,101 @@ def _recompute_task_state(
         next_event_datetime=next_event_datetime,
     )
     session.commit()
+
+
+@inject
+def _create_frequency(
+    frequency_creation_payload: TaskFrequencyCreationSchema = Depends,
+    # Injected
+    task_frequency_dao: TaskFrequencyDao = Depends(get_task_frequency_dao),
+) -> TaskFrequency:
+    # Create an uncommitted, unlinked task frequency
+    return task_frequency_dao.create(
+        type=frequency_creation_payload.type,
+        amount=frequency_creation_payload.amount,
+        period=frequency_creation_payload.period,
+        use_calendar_period=frequency_creation_payload.use_calendar_period,
+        once_on_date=frequency_creation_payload.once_on_date,
+        once_at_time=frequency_creation_payload.once_at_time,
+        once_per_weekday=frequency_creation_payload.once_per_weekday,
+    )
+
+
+@inject
+def _create_until(
+    until_creation_payload: TaskUntilCreationSchema = Depends,
+    # Injected
+    task_until_dao: TaskUntilDao = Depends(get_task_until_dao),
+) -> TaskUntil:
+    # Create an uncommitted, unlinked task until
+    return task_until_dao.create(
+        type=until_creation_payload.type,
+        amount=until_creation_payload.amount,
+        date=until_creation_payload.date,
+    )
+
+
+@inject
+def _update_task_frequency(
+    session: SessionType,
+    task_id: int,
+    authenticated_user: User,
+    frequency_creation_payload: TaskFrequencyCreationSchema,
+    # Injected
+    task_dao: TaskDao = Depends(get_task_dao),
+    task_frequency_dao: TaskFrequencyDao = Depends(get_task_frequency_dao),
+    task: Task = Depends(get_task_dependency),
+) -> None:
+    frequency = _create_frequency(
+        session=session,
+        frequency_creation_payload=frequency_creation_payload,
+    )
+    old_frequency_id = task.frequency_id
+    task_dao.update(
+        id=task_id,
+        user_id=authenticated_user.id,
+        frequency_id=frequency.id,
+    )
+    session.commit()
+    task_frequency_dao.delete(
+        id=old_frequency_id,
+    )
+    session.commit()
+    task_updated.send(
+        session=session,
+        task_id=task_id,
+        authenticated_user=authenticated_user,
+    )
+
+
+@inject
+def _update_task_until(
+    session: SessionType,
+    task_id: int,
+    authenticated_user: User,
+    until_creation_payload: TaskUntilCreationSchema,
+    # Injected
+    task_dao: TaskDao = Depends(get_task_dao),
+    task_until_dao: TaskUntilDao = Depends(get_task_until_dao),
+    task: Task = Depends(get_task_dependency),
+) -> None:
+    until = _create_until(
+        until_creation_payload=until_creation_payload,
+        session=session,
+    )
+    old_until_id = task.until_id
+    task_dao.update(
+        id=task_id,
+        user_id=authenticated_user.id,
+        until_id=until.id,
+    )
+    session.commit()
+    task_until_dao.delete(
+        id=old_until_id,
+    )
+    session.commit()
+    task_updated.send(
+        session=session,
+        task_id=task_id,
+        authenticated_user=authenticated_user,
+    )

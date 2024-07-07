@@ -4,7 +4,11 @@ from datetime import date, datetime, time, timedelta
 from typing import Callable, Dict, Optional, Tuple
 
 from app.tasks.models.task import Task, TaskStatus
-from app.tasks.models.task_frequency import FrequencyPeriod, FrequencyType, Weekday
+from app.tasks.models.task_frequency import (
+    FrequencyPeriod,
+    FrequencyType,
+    Weekday,
+)
 from app.tasks.models.task_until import UntilType
 
 period_to_days: Dict[FrequencyPeriod, int] = {
@@ -200,7 +204,9 @@ def compute_task_status(task: Task, now: datetime) -> TaskStatus:
         )
 
     if task.until.type == UntilType.date:
-        return TaskStatus.ongoing if now < task.until.date else TaskStatus.completed
+        return (
+            TaskStatus.ongoing if now.date() < task.until.date else TaskStatus.completed
+        )
 
     return TaskStatus.ongoing
 

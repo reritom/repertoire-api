@@ -26,3 +26,12 @@ class TaskUntilDao(BaseDao[TaskUntil]):
 
         self.session.flush()
         return until
+
+    def delete(self, id: int):
+        statement = self.query().where(
+            TaskUntil.id == id,
+            TaskUntil.task == None,  # noqa: E711
+        )
+        until = self.perform_get(statement)
+        self.session.delete(until)
+        self.session.flush()

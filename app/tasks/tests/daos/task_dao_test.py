@@ -205,6 +205,36 @@ def test_update_next_event_datetime_ok(session):
     assert task.next_event_datetime == datetime(2012, 12, 25, 12, 0, 0)
 
 
+def test_update_frequency_id_ok(session):
+    task = TaskFactory()
+    new_frequency = TaskFrequencyFactory()
+
+    TaskDao(session=session).update(
+        id=task.id,
+        user_id=task.user_id,
+        frequency_id=new_frequency.id,
+    )
+
+    session.refresh(task)
+
+    assert task.frequency == new_frequency
+
+
+def test_update_until_id_ok(session):
+    task = TaskFactory()
+    new_until = TaskUntilFactory()
+
+    TaskDao(session=session).update(
+        id=task.id,
+        user_id=task.user_id,
+        until_id=new_until.id,
+    )
+
+    session.refresh(task)
+
+    assert task.until == new_until
+
+
 def test_delete_ok(session):
     # Noise
     TaskFactory.create_batch(3)

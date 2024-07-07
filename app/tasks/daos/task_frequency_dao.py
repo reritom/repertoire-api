@@ -39,3 +39,12 @@ class TaskFrequencyDao(BaseDao[TaskFrequency]):
 
         self.session.flush()
         return frequency
+
+    def delete(self, id: int):
+        statement = self.query().where(
+            TaskFrequency.id == id,
+            TaskFrequency.task == None,  # noqa: E711
+        )
+        frequency = self.perform_get(statement)
+        self.session.delete(frequency)
+        self.session.flush()

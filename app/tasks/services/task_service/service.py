@@ -6,7 +6,11 @@ from app.accounts.models.user import User
 from app.database import SessionType
 from app.shared.sentinels import NO_FILTER, OptionalFilter
 from app.tasks.models.task import Task
-from app.tasks.schemas.task_schema import TaskCreationSchema
+from app.tasks.schemas.task_schema import (
+    TaskCreationSchema,
+    TaskFrequencyCreationSchema,
+    TaskUntilCreationSchema,
+)
 
 from ._service import (
     _complete_task,
@@ -17,6 +21,8 @@ from ._service import (
     _pause_task,
     _recompute_task_state,
     _unpause_task,
+    _update_task_frequency,
+    _update_task_until,
 )
 
 
@@ -115,4 +121,32 @@ def recompute_task_state(
         session=session,
         task_id=task_id,
         authenticated_user=authenticated_user,
+    )
+
+
+def update_task_frequency(
+    session: SessionType,
+    task_id: int,
+    authenticated_user: User,
+    frequency_creation_payload: TaskFrequencyCreationSchema,
+) -> None:
+    return _update_task_frequency(
+        session=session,
+        task_id=task_id,
+        authenticated_user=authenticated_user,
+        frequency_creation_payload=frequency_creation_payload,
+    )
+
+
+def update_task_until(
+    session: SessionType,
+    task_id: int,
+    authenticated_user: User,
+    until_creation_payload: TaskUntilCreationSchema,
+) -> None:
+    return _update_task_until(
+        session=session,
+        task_id=task_id,
+        authenticated_user=authenticated_user,
+        until_creation_payload=until_creation_payload,
     )

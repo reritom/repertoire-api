@@ -74,6 +74,8 @@ class TaskDao(BaseDao[Task]):
         status: OptionalAction[TaskStatus] = NO_OP,
         manually_completed_at: Optional[datetime] = NO_OP,
         next_event_datetime: OptionalAction[datetime] = NO_OP,
+        frequency_id: OptionalAction[int] = NO_OP,
+        until_id: OptionalAction[int] = NO_OP,
     ):
         task = self.get(id=id, user_id=user_id)
 
@@ -89,6 +91,16 @@ class TaskDao(BaseDao[Task]):
 
         if next_event_datetime != NO_OP:
             task.next_event_datetime = next_event_datetime
+            self.session.add(task)
+            self.session.flush()
+
+        if frequency_id != NO_OP:
+            task.frequency_id = frequency_id
+            self.session.add(task)
+            self.session.flush()
+
+        if until_id != NO_OP:
+            task.until_id = until_id
             self.session.add(task)
             self.session.flush()
 

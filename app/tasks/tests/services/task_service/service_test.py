@@ -1,4 +1,4 @@
-from datetime import datetime, time
+from datetime import date, datetime, time
 from unittest.mock import patch
 
 import pytest
@@ -21,7 +21,7 @@ from app.tasks.schemas.task_schema import (
 )
 from app.tasks.services.task_service import _service, service
 from app.tasks.services.task_service._dependencies import get_datetime_now
-from app.tasks.tests.factories import CategoryFactory, TaskFactory
+from app.tasks.tests.factories import CategoryFactory, TaskEventFactory, TaskFactory
 
 
 def test_create_task_ok__per__once_per_period_until_stopped(session):
@@ -372,3 +372,61 @@ def test_recompute_task_state_ok(m_compute_task_state, session):
 
     assert session.get(Task, task.id).status == TaskStatus.ongoing
     m_compute_task_state.assert_called_once_with(task=task, now=now)
+
+
+def test_update_frequency(session):
+    task = TaskFactory(
+        frequency__type=FrequencyType.per,
+        frequency__period=FrequencyPeriod.day,
+        frequency__amount=1,
+        next_event_datetime=datetime(2021, 12, 25, 12, 0, 0),
+        status=TaskStatus.ongoing,
+    )
+
+    service.update_task_frequency(
+        session=session,
+        task_id=task.id,
+        authenticated_user=task.user,
+        frequency_creation_payload=TaskFrequencyCreationSchema(
+            type=FrequencyType.on,
+            once_on_date=date(2024, 12, 25),
+            amount=1,
+        ),
+    )
+
+    session.refresh(task)
+
+    assert task.frequency.type == FrequencyType.on
+    assert task.frequency.once_on_date == date(2024, 12, 25)
+    assert task.next_event_datetime == datetime(2024, 12, 25, 23, 59, 0)
+
+
+def test_update_task_until(session):
+    task = TaskFactory(
+        frequency__type=FrequencyType.per,
+        frequency__period=FrequencyPeriod.day,
+        frequency__amount=1,
+        until__type=UntilType.amount,
+        until__amount=2,
+        next_event_datetime=None,
+        status=TaskStatus.completed,
+    )
+    TaskEventFactory.create_batch(2, task=task)
+
+    new_date = date(date.today().year + 1, 12, 25)
+
+    service.update_task_until(
+        session=session,
+        task_id=task.id,
+        authenticated_user=task.user,
+        until_creation_payload=TaskUntilCreationSchema(
+            type=UntilType.date, date=new_date
+        ),
+    )
+
+    session.refresh(task)
+
+    assert task.until.type == UntilType.date
+    assert task.until.amount is None
+    assert task.until.date == new_date
+    assert task.next_event_datetime is not None

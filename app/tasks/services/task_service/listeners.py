@@ -7,8 +7,10 @@ from app.tasks.services.task_event_service.signals import (
 from app.tasks.services.task_service.service import (
     recompute_task_state,
 )
+from app.tasks.services.task_service.signals import task_updated
 
 
+@task_updated.connect
 @task_event_created.connect
 @task_event_deleted.connect
 def trigger_task_state_recompute(

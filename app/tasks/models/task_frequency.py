@@ -2,11 +2,15 @@ from __future__ import annotations
 
 import enum
 from datetime import date, time
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, Date, Enum, Integer, Time
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+if TYPE_CHECKING:
+    from .task import Task
 
 
 class Weekday(enum.Enum):
@@ -55,6 +59,10 @@ class TaskFrequency(Base):
         Enum(Weekday), nullable=True
     )
     once_at_time: Mapped[time | None] = mapped_column(Time, nullable=True)
+
+    task: Mapped["Task"] = relationship(
+        "Task", back_populates="frequency", uselist=False
+    )
 
     @property
     def representation(self) -> str:

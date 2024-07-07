@@ -2,11 +2,15 @@ from __future__ import annotations
 
 import enum
 from datetime import date as _date
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Date, Enum, Integer
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+if TYPE_CHECKING:
+    from .task import Task
 
 
 class UntilType(enum.Enum):
@@ -23,6 +27,8 @@ class TaskUntil(Base):
     type: Mapped[UntilType] = mapped_column(Enum(UntilType), nullable=False)
     amount: Mapped[int | None] = mapped_column(Integer, nullable=True)
     date: Mapped[_date | None] = mapped_column(Date, nullable=True)
+
+    task: Mapped["Task"] = relationship("Task", back_populates="until", uselist=False)
 
     @property
     def representation(self) -> str:

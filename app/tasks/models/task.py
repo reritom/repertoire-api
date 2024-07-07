@@ -56,6 +56,7 @@ class Task(Base):
         foreign_keys=frequency_id,
         lazy="joined",
         cascade="delete,all",
+        back_populates="task",
     )
 
     until_id: Mapped[int] = mapped_column(
@@ -67,6 +68,7 @@ class Task(Base):
         foreign_keys=until_id,
         lazy="joined",
         cascade="delete,all",
+        back_populates="task",
     )
 
     events: Mapped[List[TaskEvent]] = relationship(
