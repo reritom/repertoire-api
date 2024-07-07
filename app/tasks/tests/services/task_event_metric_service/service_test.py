@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import pytest
 from sqlalchemy.exc import NoResultFound
 
@@ -38,13 +40,13 @@ def test_create_task_event_metric_ok(session):
         task_event_metric_creation_payload=TaskEventMetricCreationSchema(
             task_event_id=event.id,
             task_metric_id=metric.id,
-            value=10,
+            value=Decimal(10),
         ),
     )
 
     assert event_metric.task_event == event
     assert event_metric.task_metric == metric
-    assert event_metric.value == 10
+    assert event_metric.value == Decimal(10)
 
 
 def test_create_task_event_metric_failure_task_event_not_visible_to_user(session):
@@ -60,7 +62,7 @@ def test_create_task_event_metric_failure_task_event_not_visible_to_user(session
             task_event_metric_creation_payload=TaskEventMetricCreationSchema(
                 task_event_id=event.id,
                 task_metric_id=metric.id,
-                value=10,
+                value=Decimal(10),
             ),
         )
 
@@ -80,7 +82,7 @@ def test_create_task_event_metric_failure_task_metric_not_visible_to_user(sessio
             task_event_metric_creation_payload=TaskEventMetricCreationSchema(
                 task_event_id=event.id,
                 task_metric_id=metric.id,
-                value=10,
+                value=Decimal(10),
             ),
         )
 
@@ -99,7 +101,7 @@ def test_create_task_event_metric_failure_duplicate(session):
             task_event_metric_creation_payload=TaskEventMetricCreationSchema(
                 task_event_id=existing.task_event_id,
                 task_metric_id=existing.task_metric_id,
-                value=10,
+                value=Decimal(10),
             ),
         )
 
@@ -118,7 +120,7 @@ def test_create_task_event_metric_failure_task_not_the_same(session):
             task_event_metric_creation_payload=TaskEventMetricCreationSchema(
                 task_event_id=event.id,
                 task_metric_id=metric.id,
-                value=10,
+                value=Decimal(10),
             ),
         )
 

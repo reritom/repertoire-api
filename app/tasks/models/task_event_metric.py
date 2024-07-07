@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, Integer, UniqueConstraint
+from sqlalchemy import Float, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -32,5 +33,4 @@ class TaskEventMetric(Base):
     )
     task_event: Mapped[TaskEvent] = relationship(back_populates="metrics")
 
-    # TODO value should be Decimal not int
-    value: Mapped[int] = mapped_column(Integer, nullable=False)
+    value: Mapped[Decimal] = mapped_column(Float(asdecimal=True), nullable=False)

@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 
 from factory import SelfAttribute, Sequence, SubFactory, alchemy
 from factory.declarations import LazyFunction
@@ -87,7 +88,7 @@ class TaskEventMetricFactory(alchemy.SQLAlchemyModelFactory):
     task = SubFactory(TaskFactory)
     task_metric = SubFactory(TaskMetricFactory, task=SelfAttribute("..task"))
     task_event = SubFactory(TaskEventFactory, task=SelfAttribute("..task"))
-    value = Sequence(lambda n: n)
+    value = Sequence(lambda n: Decimal(n))
 
 
 class CategoryFactory(alchemy.SQLAlchemyModelFactory):

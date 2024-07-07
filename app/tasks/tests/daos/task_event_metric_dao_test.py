@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from app.tasks.daos.task_event_metric_dao import TaskEventMetricDao
 from app.tasks.models.task_event_metric import TaskEventMetric
 from app.tasks.tests.factories import (
@@ -21,12 +23,12 @@ def test_create_task_event_metric_ok(session):
     task_event_metric = TaskEventMetricDao(session=session).create(
         task_metric_id=task_metric.id,
         task_event_id=task_event.id,
-        value=10,
+        value=Decimal(10),
     )
 
     assert task_event_metric.task_event == task_event
     assert task_event_metric.task_metric == task_metric
-    assert task_event_metric.value == 10
+    assert task_event_metric.value == Decimal(10)
 
 
 def test_query_filter_by_id(session, subtests):

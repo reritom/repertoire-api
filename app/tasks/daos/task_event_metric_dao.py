@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from app.shared.dao import BaseDao
 from app.shared.sentinels import NO_FILTER, OptionalFilter
 from app.tasks.models.task import Task
@@ -10,7 +12,10 @@ class TaskEventMetricDao(BaseDao[TaskEventMetric]):
         model = TaskEventMetric
 
     def create(
-        self, task_metric_id: int, task_event_id: int, value: int
+        self,
+        task_metric_id: int,
+        task_event_id: int,
+        value: Decimal,
     ) -> TaskEventMetric:
         event_metric = TaskEventMetric(
             task_metric_id=task_metric_id,
