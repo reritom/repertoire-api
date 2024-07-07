@@ -145,12 +145,14 @@ def _complete_task(
     task_id: int = Depends,
     authenticated_user: User = Depends,
     # Injected
+    now: date = Depends(get_date_now),
     task_dao: TaskDao = Depends(get_task_dao),
 ) -> None:
     task_dao.update(
         id=task_id,
         user_id=authenticated_user.id,
         status=TaskStatus.completed,
+        manually_completed_at=now,
     )
     session.commit()
 
@@ -167,6 +169,8 @@ def _recompute_task_status(
     task = task_dao.get(id=task_id)
     # TODO if an event is deleted, then a task could become incomplete
     print("In recompute")
+    if task.manually_completed_at is not None:
+        return
 
     if task.status == TaskStatus.completed:
         print(f"Is completed, {task.until.type} {len(task.events)} {task.until.amount}")

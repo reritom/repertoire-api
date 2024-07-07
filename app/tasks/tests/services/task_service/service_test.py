@@ -1,4 +1,4 @@
-from datetime import date, time
+from datetime import date, datetime, time
 
 import pytest
 from fast_depends import dependency_provider
@@ -326,6 +326,25 @@ def test_recompute_task_status__amount_completed(
     )
 
     assert session.get(Task, task.id).status == expected_status
+
+
+def test_recompute_task_status__ignore_as_manually_completed(session):
+    task = TaskFactory(
+        status=TaskStatus.completed,
+        until__type=UntilType.amount,
+        until__amount=2,
+        manually_completed_at=datetime(2012, 12, 25, 12, 0, 0),
+    )
+    TaskEventFactory(task=task)
+    # This would normally be updated to be uncompleted, but we dont because it was manually completed
+
+    service.recompute_task_status(
+        task_id=task.id,
+        authenticated_user=task.user,
+        session=session,
+    )
+
+    assert session.get(Task, task.id).status == TaskStatus.completed
 
 
 def test_recompute_task_status__amount_uncompleted(session):

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from app.shared.dao import BaseDao
@@ -60,11 +61,22 @@ class TaskDao(BaseDao[Task]):
 
         return statement
 
-    def update(self, id: int, user_id: int, status: OptionalAction[TaskStatus] = NO_OP):
+    def update(
+        self,
+        id: int,
+        user_id: int,
+        status: OptionalAction[TaskStatus] = NO_OP,
+        manually_completed_at: Optional[datetime] = NO_OP,
+    ):
         task = self.get(id=id, user_id=user_id)
 
         if status != NO_OP:
             task.status = status
+            self.session.add(task)
+            self.session.flush()
+
+        if manually_completed_at != NO_OP:
+            task.manually_completed_at = manually_completed_at
             self.session.add(task)
             self.session.flush()
 

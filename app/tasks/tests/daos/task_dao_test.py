@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 from sqlalchemy.exc import IntegrityError
 
@@ -163,6 +165,20 @@ def test_update_status_ok(session):
     session.refresh(task)
 
     assert task.status == TaskStatus.completed
+
+
+def test_update_manually_completed_at_ok(session):
+    task = TaskFactory(manually_completed_at=None)
+
+    TaskDao(session=session).update(
+        id=task.id,
+        user_id=task.user_id,
+        manually_completed_at=datetime(2012, 12, 25, 12, 0, 0),
+    )
+
+    session.refresh(task)
+
+    assert task.manually_completed_at == datetime(2012, 12, 25, 12, 0, 0)
 
 
 def test_delete_ok(session):
