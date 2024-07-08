@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy.orm import Session as SessionType
@@ -21,4 +23,9 @@ def get_session():
     session.close()
 
 
-__all__ = ["get_session", "Base", "Session", "SessionType"]
+@contextmanager
+def using_get_session():
+    return get_session()
+
+
+__all__ = ["get_session", "Base", "Session", "SessionType", "using_get_session"]

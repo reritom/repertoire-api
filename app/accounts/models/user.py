@@ -20,7 +20,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     created: Mapped[datetime] = mapped_column(insert_default=datetime.utcnow)
 
-    email: Mapped[str] = mapped_column(String(100))
+    email: Mapped[str] = mapped_column(String(100), unique=True)
     password_hash: Mapped[str] = mapped_column(String(260))
     preferences: Mapped[List[UserPreference]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
