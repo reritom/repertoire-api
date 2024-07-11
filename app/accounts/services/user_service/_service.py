@@ -3,9 +3,10 @@ from fast_depends import Depends, inject
 from app.accounts.daos.user_dao import UserDao
 from app.accounts.models.user import User
 from app.accounts.schemas.user_schema import UserCreationSchema
-from app.accounts.services.user_service._dependencies import get_user, get_user_dao
+from app.accounts.services.user_service._dependencies import get_user_dao
 from app.accounts.services.user_service._utils import check_password, hash_password
 from app.database import SessionType
+from app.shared.exceptions import ServiceValidationError
 
 
 @inject
@@ -25,12 +26,17 @@ def _create_user(
 
 
 @inject
-def _validate_credentials(
+def _get_user_from_credentials(
+    email: str,
     password: str,
     # Injected
-    user: User = Depends(get_user),
-) -> bool:
-    return check_password(password, hashed_password=user.password_hash)
+    user_dao: UserDao = Depends(get_user_dao),
+) -> User:
+    user = user_dao.get(email=email, raise_exc=False)
+    if user and check_password(password, hashed_password=user.password_hash):
+        return user
+
+    raise ServiceValidationError("Invalid credentials")
 
 
 @inject

@@ -33,3 +33,15 @@ def test_query_filter_by_id(session, subtests):
         with subtests.test():
             users = UserDao(session=session).list(**filters)
             assert users == expected_users
+
+
+def test_query_filter_by_email(session, subtests):
+    user_1 = UserFactory()
+    user_2 = UserFactory()
+
+    cases = [({}, [user_1, user_2]), ({"email": user_1.email}, [user_1])]
+
+    for filters, expected_users in cases:
+        with subtests.test():
+            users = UserDao(session=session).list(**filters)
+            assert users == expected_users

@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     SQLALCHEMY_DATABASE_URI: Optional[str] = None
     SQLALCHEMY_ENGINE_OPTIONS: ClassVar = {"pool_size": 100}
 
+    # Application
+    AUTH_SECRET_KEY: str = "CHANGEME"
+    ACCESS_TOKEN_LIFESPAN_MINUTES: int = 60 * 24 * 30  # Around a month, dummy value
+
     @field_validator("SQLALCHEMY_DATABASE_URI", mode="before")
     @classmethod
     def set_uri(cls, value, info: ValidationInfo):

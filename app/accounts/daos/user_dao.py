@@ -14,10 +14,17 @@ class UserDao(BaseDao[User]):
         self.session.flush()
         return user
 
-    def query(self, id: OptionalFilter[int] = NO_FILTER):
+    def query(
+        self,
+        id: OptionalFilter[int] = NO_FILTER,
+        email: OptionalFilter[str] = NO_FILTER,
+    ):
         statement = super().query()
 
         if id is not NO_FILTER:
             statement = statement.where(User.id == id)
+
+        if email is not NO_FILTER:
+            statement = statement.where(User.email == email)
 
         return statement

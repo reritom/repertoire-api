@@ -1,8 +1,10 @@
+from typing import Optional
+
 from app.accounts.models.user import User
 from app.accounts.schemas.user_schema import UserCreationSchema
 from app.database import SessionType
 
-from ._service import _create_user, _get_user, _validate_credentials
+from ._service import _create_user, _get_user, _get_user_from_credentials
 
 
 def create_user(
@@ -15,11 +17,16 @@ def create_user(
     )
 
 
-def validate_credentials(
-    user_id: int,
+def get_user_from_credentials(
+    session: SessionType,
+    email: str,
     password: str,
-) -> bool:
-    return _validate_credentials(user_id=user_id, password=password)
+) -> Optional[User]:
+    return _get_user_from_credentials(
+        session=session,
+        email=email,
+        password=password,
+    )
 
 
 def get_user(session: SessionType, user_id: int) -> User:
