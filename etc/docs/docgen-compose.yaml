@@ -1,0 +1,12 @@
+version: '2'
+services:
+    repertoire-api:
+        image: repertoire-api:latest
+        container_name: repertoire-api
+        environment:
+            # Env needed for the app to start, but we don't use any of these services in docgen
+            POSTGRES_DB_URI: postgresql+psycopg2://one:password@repertoire-database/repertoire
+        volumes:
+            - ../../built-artifacts:/home/built-artifacts:delegated
+        restart: on-failure
+        command: sh -c "tail -f /dev/null"

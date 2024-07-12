@@ -1,0 +1,6 @@
+version: '2'
+services:
+    repertoire-redoc:
+        image: repertoire-redoc:latest
+        ports:
+            - "8082:80"

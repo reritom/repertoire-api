@@ -1,0 +1,4 @@
+CREATE USER one WITH PASSWORD 'password';
+
+CREATE DATABASE repertoire;
+GRANT ALL PRIVILEGES ON DATABASE repertoire TO one;

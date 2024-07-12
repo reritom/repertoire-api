@@ -52,18 +52,18 @@ build-base:
     COPY pyproject.toml pdm.lock ./
     RUN pdm sync --prod
 
-# build - Build then deployment image
-build:
+# build-repertoire-api-image - Build the local deployment image
+build-repertoire-api-image:
     FROM +build-base
     WORKDIR /home
 
     COPY . .
     EXPOSE 8080
     CMD uvicorn wsgi:app --host 0.0.0.0 --port 8080 --reload
-    SAVE IMAGE repertoire:latest
+    SAVE IMAGE repertoire-api:latest
 
-# build-test - Build the test container image
-build-test:
+# build-repertoire-test-image - Build the test container image
+build-repertoire-test-image:
     FROM +build-base
     
     # Install all deps, including dev deps
@@ -78,7 +78,7 @@ build-test:
 test:
     FROM earthly/dind:alpine
     WAIT
-        BUILD +build-test
+        BUILD +build-repertoire-test-image
     END
 
     WORKDIR /home
@@ -93,20 +93,20 @@ test:
     ARG path="."
     ARG num="4"
 
-    WITH DOCKER --compose test-compose.yml --load repertoire-test:latest=+build-test
+    WITH DOCKER --compose test-compose.yml --load repertoire-test:latest=+build-repertoire-test-image
         RUN --no-cache docker exec -t test-backend pytest --tb=short -n $num $path -v --durations=50
     END
 
 
-# deploy - Deploy the application local stack
-deploy:
+# deploy-local - Deploy the application local stack
+deploy-local:
     LOCALLY
     WAIT
-        BUILD +build
+        BUILD +build-repertoire-api-image
     END
 
-    WITH DOCKER --load repertoire:latest=+build
-        RUN docker run -p 8080:8080 repertoire:latest
+    WITH DOCKER --load repertoire-api:latest=+build-repertoire-api-image
+        RUN docker-compose -f etc/local/local-compose.yml up
     END
 
 # format - Run ruff format on the source
@@ -131,3 +131,33 @@ lint-ruff:
 # lint - Run ruff on the source
 lint:
     BUILD +lint-ruff
+
+
+# build-openapi-json - [Internal] Build the app openapi.json and save as an artifact
+build-openapi-json:
+    FROM earthly/dind:alpine
+
+    WORKDIR /home
+    COPY . .
+
+    WITH DOCKER --compose etc/docs/docgen-compose.yaml --load repertoire-api:latest=+build-repertoire-api-image
+        # Generate the openapi which will be saved in a mounted volume
+        RUN docker exec -t repertoire-api python -m app.cli generate-openapi /home/built-artifacts/openapi.json
+    END
+
+    SAVE ARTIFACT /home/built-artifacts/openapi.json
+
+# build-repertoire-redoc - Build the repertoire redoc image
+build-repertoire-redoc:
+    FROM redocly/redoc:latest
+    COPY +build-openapi-json/openapi.json /usr/share/nginx/html/spec.json
+    ENV SPEC_URL=spec.json
+    SAVE IMAGE repertoire-redoc:latest
+
+# deploy-docs-local - Deploy the redoc image locally
+deploy-docs-local:
+    LOCALLY
+
+    WITH DOCKER --load repertoire-redoc:latest=+build-repertoire-redoc
+        RUN docker-compose -f etc/docs/docs-compose.yaml up
+    END
