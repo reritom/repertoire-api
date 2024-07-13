@@ -3,6 +3,8 @@ services:
     repertoire-database:
         image: postgres:13.8-alpine
         user: postgres
+        ports:
+            - "5432:5432"
         volumes:
             - ./local-initdb/:/docker-entrypoint-initdb.d
         environment:
@@ -12,6 +14,8 @@ services:
     repertoire-api:
         container_name: repertoire-api
         image: repertoire-api:latest
+        ports:
+            - "8080:8080"
         volumes:
             - ../../app:/home/app:delegated
         depends_on:

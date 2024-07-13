@@ -1,8 +1,12 @@
 import json
+import logging
 
 import typer
 
 from app.accounts.cli import app as accounts_cli
+from app.database import Base, engine
+
+logger = logging.getLogger(__name__)
 
 app = typer.Typer()
 app.add_typer(accounts_cli, name="accounts")
@@ -24,6 +28,12 @@ def generate_openapi(output_path: str):
             f,
             indent=2,
         )
+
+
+@app.command("init-db")
+def init_db():
+    Base.metadata.create_all(engine)
+    logger.info("Database tables created")
 
 
 if __name__ == "__main__":

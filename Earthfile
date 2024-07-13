@@ -161,3 +161,15 @@ deploy-docs-local:
     WITH DOCKER --load repertoire-redoc:latest=+build-repertoire-redoc
         RUN docker-compose -f etc/docs/docs-compose.yaml up
     END
+
+# init-local-database - Create the database and tables for a fresh local deployment
+init-local-database:
+    LOCALLY
+    RUN docker exec -t repertoire-api python -m app.cli init-db
+
+# create-local-user - Create a user on the local deployed instance
+create-local-user:
+    LOCALLY
+    ARG --required email
+    ARG --required password
+    RUN docker exec -t repertoire-api python -m app.cli accounts create-user --email=$email --password=$password
