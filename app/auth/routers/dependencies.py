@@ -27,7 +27,7 @@ def authenticated_user_required(
     authenticated_user: Optional[User] = Depends(get_authenticated_user),
 ) -> None:
     if not authenticated_user:
-        raise HTTPException(status_code=401, detail="Authenticated required")
+        raise HTTPException(status_code=401, detail="Authentication required")
 
 
 def unauthenticated_user_required(

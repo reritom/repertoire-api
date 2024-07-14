@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from typing import Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
@@ -17,7 +18,7 @@ session_factory = sessionmaker(engine, autocommit=False, autoflush=False)
 Session: SessionType = scoped_session(session_factory)
 
 
-def get_session():
+def get_session() -> Generator[SessionType, None, None]:
     session = Session()
     yield session
     session.close()

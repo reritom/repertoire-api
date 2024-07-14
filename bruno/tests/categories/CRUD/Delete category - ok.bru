@@ -1,0 +1,21 @@
+meta {
+  name: Delete category - ok
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{api-domain}}/api/categories/{{createdCategoryId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+tests {
+  test("Response should be 204", () => {
+    expect(res.getStatus()).to.equal(204);
+  })
+}

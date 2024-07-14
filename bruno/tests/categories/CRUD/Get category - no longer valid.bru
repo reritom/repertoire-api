@@ -1,0 +1,21 @@
+meta {
+  name: Get category - no longer valid
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{api-domain}}/api/categories/{{createdCategoryId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+tests {
+  test("Response should be 404", () => {
+    expect(res.getStatus()).to.equal(404);
+  })
+}

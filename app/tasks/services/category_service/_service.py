@@ -45,11 +45,13 @@ def _create_category(
 def _delete_category(
     authenticated_user: User = Depends,
     category_id: int = Depends,
+    session: SessionType = Depends,
     # Injected
     category_dao: CategoryDao = Depends(get_category_dao),
 ) -> None:
     """A sqlalchemy.exc.NoResultFound will be raised if the category is not found"""
     category_dao.delete(user_id=authenticated_user.id, id=category_id)
+    session.commit()
 
 
 @inject

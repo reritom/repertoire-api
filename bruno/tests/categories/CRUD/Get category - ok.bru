@@ -1,0 +1,21 @@
+meta {
+  name: Get category - ok
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{api-domain}}/api/categories/{{createdCategoryId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+tests {
+  test("Response should be 200", () => {
+    expect(res.getStatus()).to.equal(200);
+  })
+}

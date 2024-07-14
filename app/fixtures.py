@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -35,11 +37,10 @@ def client(session, app):
 
 
 @pytest.fixture(scope="function")
-def make_authenticated_client(session, app):
-    def _make_authenticated_client(user):
-        client = TestClient(app)
-        app.dependency_overrides[get_session] = lambda: session
+def using_user(app):
+    @contextmanager
+    def _using_user(user):
         app.dependency_overrides[get_authenticated_user] = lambda: user
-        return client
+        yield
 
-    return _make_authenticated_client
+    return _using_user

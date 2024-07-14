@@ -1,0 +1,25 @@
+meta {
+  name: Get categories - empty
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{api-domain}}/api/categories
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+tests {
+  test("Response should be ok", () => {
+    expect(res.getStatus()).to.equal(200);
+  })
+  
+  test("Response should be empty", () => {
+    expect(res.getBody()).to.have.lengthOf(0);
+  })
+}

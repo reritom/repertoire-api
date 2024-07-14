@@ -48,11 +48,11 @@ def test_login_failure_missing_fields(client: TestClient):
     }
 
 
-def test_login_failure_already_logged_in(make_authenticated_client):
-    client: TestClient = make_authenticated_client(UserFactory())
-    response = client.post(
-        "/api/login", json={"email": "myemail", "password": "mypassword"}
-    )
+def test_login_failure_already_logged_in(client: TestClient, using_user):
+    with using_user(UserFactory()):
+        response = client.post(
+            "/api/login", json={"email": "myemail", "password": "mypassword"}
+        )
 
     assert response.json() == {"detail": "Already authenticated"}
     assert response.status_code == 403

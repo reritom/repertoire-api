@@ -1,0 +1,25 @@
+meta {
+  name: Get category - invalid
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{api-domain}}/api/categories/12345
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+tests {
+  test("Response should be 404", () => {
+    expect(res.getStatus()).to.equal(404);
+  })
+  
+  test("Category not found", () => {
+    expect(res.getBody().message).to.equal("Category not found")
+  })
+}
