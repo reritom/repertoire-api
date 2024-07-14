@@ -10,27 +10,28 @@ from app.auth.services.auth_service.service import (
 )
 from app.database import SessionType, get_session
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 def get_authenticated_user(
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+    credentials: Annotated[Optional[HTTPAuthorizationCredentials], Depends(security)],
     session: SessionType = Depends(get_session),
 ) -> Optional[User]:
-    return _get_authenticated_user(
-        session=session, access_token=credentials.credentials
-    )
+    if credentials:
+        return _get_authenticated_user(
+            session=session, access_token=credentials.credentials
+        )
 
 
 def authenticated_user_required(
     authenticated_user: Optional[User] = Depends(get_authenticated_user),
 ) -> None:
     if not authenticated_user:
-        raise HTTPException(status_code=401)
+        raise HTTPException(status_code=401, detail="Authenticated required")
 
 
 def unauthenticated_user_required(
     authenticated_user: Optional[User] = Depends(get_authenticated_user),
 ) -> None:
     if authenticated_user:
-        raise HTTPException(status_code=403)
+        raise HTTPException(status_code=403, detail="Already authenticated")
