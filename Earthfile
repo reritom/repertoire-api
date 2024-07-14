@@ -94,7 +94,7 @@ test:
     ARG num="4"
 
     WITH DOCKER --compose test-compose.yml --load repertoire-test:latest=+build-repertoire-test-image
-        RUN --no-cache docker exec -t test-backend pytest --tb=short -n $num $path -v --durations=50
+        RUN --no-cache docker exec -t test-backend pytest --tb=short -n $num $path -vv --durations=50
     END
 
 
@@ -173,3 +173,27 @@ create-local-user:
     ARG --required email
     ARG --required password
     RUN docker exec -t repertoire-api python -m app.cli accounts create-user --email=$email --password=$password
+
+# run-bruno-suite - Run a specific bruno test folder against a ephemeral instance of the backend, example argument: --SUITE=tests/authentication/login 
+run-bruno-suite:
+    FROM earthly/dind:alpine
+    RUN apk add --update nodejs npm
+    RUN npm install -g @usebruno/cli
+    ARG --required SUITE
+    COPY . .
+
+    WITH DOCKER --compose etc/local/local-compose.yml --load repertoire-api:latest=+build-repertoire-api-image
+        RUN docker exec -t repertoire-api python -m app.cli init-db &&\
+            docker exec -t repertoire-api python -m app.cli accounts create-user --email=test@test.test --password=test1 &&\
+            cd bruno &&\
+            bru run $SUITE --env local
+    END
+
+# run-all-bruno-suites - Run all bruno test folders. Each folder will be tested against it's own ephemeral instance of the backend
+run-all-bruno-suites:
+    LOCALLY
+    # Iterate all leaf directories within the bruno test directory
+    WORKDIR bruno
+    FOR suite IN $(find tests/* -type d | sort | awk '$0 !~ last "/" {print last} {last=$0} END {print last}')
+        BUILD +run-bruno-suite --SUITE=$suite
+    END
