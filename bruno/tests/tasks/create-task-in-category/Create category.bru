@@ -1,0 +1,33 @@
+meta {
+  name: Create category
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{api-domain}}/api/categories
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+body:json {
+  {
+    "name": "Myname",
+    "description": "my long description",
+    "icon_name": "swimming",
+    "icon_hex_colour": "FFFAAA"
+  }
+}
+
+tests {
+  test("Response should be 201", () => {
+    expect(res.getStatus()).to.equal(201);
+  })
+  
+  // TODO this should be setVar, but bruno currently doesnt seem to let me put normal vars in json payload bodies in the next requests
+  bru.setEnvVar("createdCategoryId",res.getBody().id)
+}

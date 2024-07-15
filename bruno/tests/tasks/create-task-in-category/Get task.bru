@@ -1,0 +1,25 @@
+meta {
+  name: Get task
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{api-domain}}/api/tasks/{{createdTaskId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+tests {
+  test("Response should be 200", () => {
+    expect(res.getStatus()).to.equal(200);
+  })
+  
+  test("Task name should be correct", () => {
+    expect(res.getBody().name).to.equal("Go swimming")
+  })
+}

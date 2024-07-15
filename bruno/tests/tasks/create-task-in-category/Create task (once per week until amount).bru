@@ -1,0 +1,59 @@
+meta {
+  name: Create task (once per week until amount)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{api-domain}}/api/tasks
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+body:json {
+  {
+    "name": "Go swimming",
+    "description": "Like, swim",
+    "category_id": {{createdCategoryId}},
+    "frequency": {
+      "amount": 5,
+      "type": "per",
+      "period": "week"
+    },
+    "until": {
+      "type": "stopped"
+    }
+  }
+}
+
+body:text {
+  {
+    "name": "Go swimming",
+    "description": "Like, swim",
+    "category_id": {{createdCategoryId}},
+    "frequency": {
+      "amount": 5,
+      "type": "per",
+      "period": "week"
+    },
+    "until": {
+      "type": "stopped"
+    }
+  }
+}
+
+body:multipart-form {
+  : 
+}
+
+tests {
+  test("Response should be 201", () => {
+    expect(res.getStatus()).to.equal(201);
+  })
+  
+  bru.setVar("createdTaskId",res.getBody().id)
+}
