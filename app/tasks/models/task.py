@@ -33,7 +33,9 @@ class Task(Base):
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    created: Mapped[datetime] = mapped_column(insert_default=datetime.utcnow)
+    created: Mapped[datetime] = mapped_column(
+        DateTime(), insert_default=datetime.utcnow
+    )
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     user: Mapped[User] = relationship(back_populates="tasks")

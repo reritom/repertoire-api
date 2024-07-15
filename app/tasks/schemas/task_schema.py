@@ -7,6 +7,7 @@ from pydantic.fields import Field
 from pydantic.main import BaseModel
 from pydantic_core import PydanticCustomError
 
+from app.shared.tools import datetime_serialiser
 from app.tasks.models.task import Task
 from app.tasks.models.task_frequency import FrequencyPeriod, FrequencyType, Weekday
 from app.tasks.models.task_until import UntilType
@@ -127,9 +128,36 @@ class TaskFrequencyCreationSchema(TaskFrequencySchema):
 
 
 class TaskUntilSchema(BaseModel):
-    type: UntilType
-    amount: Annotated[int | None, Field(None)]
-    date: Annotated[_date | None, Field(None)]
+    type: Annotated[
+        UntilType,
+        Field(
+            ...,
+            description=(
+                "Define whether this task will be completed by reaching a given date, "
+                "or by being done a given number of times."
+            ),
+        ),
+    ]
+    amount: Annotated[
+        int | None,
+        Field(
+            None,
+            description=(
+                "This must be provided if the type is 'amount'. "
+                "The task will be marked as completed once this number of events have been registered."
+            ),
+        ),
+    ]
+    date: Annotated[
+        _date | None,
+        Field(
+            None,
+            description=(
+                "This must be provided if the type is 'date'. "
+                "The task will be marked as completed once this date is reached."
+            ),
+        ),
+    ]
 
 
 class TaskUntilCreationSchema(TaskUntilSchema):
@@ -185,7 +213,7 @@ class TaskCreationSchema(BaseModel):
 
 class TaskSchema(TaskCreationSchema):
     id: int
-    created: datetime
+    created: Annotated[datetime, datetime_serialiser]
     frequency: TaskFrequencySchema
     until: TaskUntilSchema
     next_event_datetime: Optional[datetime] = None

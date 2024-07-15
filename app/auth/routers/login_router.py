@@ -5,7 +5,7 @@ from app.auth.schemas.login_schema import LoginResponseSchema, LoginSchema
 from app.auth.services.auth_service.service import login_user
 from app.database import SessionType, get_session
 
-router = APIRouter()
+router = APIRouter(tags=["Authentication"])
 
 
 @router.post(

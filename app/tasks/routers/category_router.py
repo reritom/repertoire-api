@@ -12,7 +12,10 @@ from app.tasks.models.category import Category
 from app.tasks.schemas.category_schema import CategoryCreationSchema, CategorySchema
 from app.tasks.services.category_service import service as category_service
 
-router = APIRouter(dependencies=[Depends(authenticated_user_required)])
+router = APIRouter(
+    tags=["Categories"],
+    dependencies=[Depends(authenticated_user_required)],
+)
 
 
 @router.post(
