@@ -164,6 +164,9 @@ def test_get_tasks_ok(client: TestClient, using_user):
     ]
 
 
+# TODO test filters
+
+
 def test_get_task_failure_not_authenticated(client: TestClient):
     response = client.get("/api/tasks/12345")
 

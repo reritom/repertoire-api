@@ -27,4 +27,19 @@ datetime_serialiser = WrapSerializer(
     when_used="json-unless-none",
 )
 
+
+def _decimal_serializer(
+    value: Any,
+    nxt: pydantic.SerializerFunctionWrapHandler,
+    info: pydantic.FieldSerializationInfo,
+) -> str:
+    return f"{value:.2f}"
+
+
+decimal_serializer = WrapSerializer(
+    _decimal_serializer,
+    return_type=str,
+    when_used="json-unless-none",
+)
+
 __all__ = ["as_dict", "datetime_serialiser"]

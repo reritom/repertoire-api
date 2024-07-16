@@ -21,6 +21,7 @@ def get_task_metric_from_task_event_metric_creation_payload(
     authenticated_user: User = Depends,
 ) -> TaskMetric:
     # A NoResultFound will be raised if the user can't use this task metric
+    # TODO reraise service validation error
     return get_task_metric(
         session=session,
         authenticated_user=authenticated_user,
@@ -34,6 +35,7 @@ def get_task_event_from_task_event_metric_creation_payload(
     authenticated_user: User = Depends,
 ) -> TaskEvent:
     # A NoResultFound will be raised if the user can't use this task event
+    # TODO reraise service validation error
     return get_task_event(
         session=session,
         authenticated_user=authenticated_user,
