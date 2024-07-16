@@ -1,0 +1,22 @@
+meta {
+  name: Delete event
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{api-domain}}/api/task-events/{{createdTaskEventId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+tests {
+  test("Response should be ok", () => {
+    expect(res.getStatus()).to.equal(204);
+  })
+  
+}

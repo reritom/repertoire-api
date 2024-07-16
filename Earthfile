@@ -195,5 +195,9 @@ run-all-bruno-suites:
     # Iterate all leaf directories within the bruno test directory
     WORKDIR bruno
     FOR suite IN $(find tests/* -type d | sort | awk '$0 !~ last "/" {print last} {last=$0} END {print last}')
-        BUILD +run-bruno-suite --SUITE=$suite
+        IF [ -z "$( ls -A $suite )" ]
+            RUN echo "Skipping $suite as it is empty"
+        ELSE
+            BUILD +run-bruno-suite --SUITE=$suite
+        END
     END

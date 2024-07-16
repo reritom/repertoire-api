@@ -1,0 +1,29 @@
+meta {
+  name: Get metrics - not empty
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{api-domain}}/api/task-metrics?task_id={{createdTaskId}}
+  body: none
+  auth: none
+}
+
+params:query {
+  task_id: {{createdTaskId}}
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+tests {
+  test("Response should be ok", () => {
+    expect(res.getStatus()).to.equal(200);
+  })
+  
+  test("Response should be empty", () => {
+    expect(res.getBody()).to.have.lengthOf(1);
+  })
+}

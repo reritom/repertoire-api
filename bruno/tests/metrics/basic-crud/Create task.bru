@@ -1,0 +1,41 @@
+meta {
+  name: Create task
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{api-domain}}/api/tasks
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+body:json {
+  {
+    "name": "Swimming?",
+    "description": "Like, swim",
+    "frequency": {
+      "amount": 5,
+      "type": "per",
+      "period": "week"
+    },
+    "until": {
+      "type": "stopped"
+    }
+  }
+}
+
+vars:post-response {
+  createdTaskId: res.body.id
+}
+
+tests {
+  test("Response should be 201", () => {
+    expect(res.getStatus()).to.equal(201);
+  })
+  
+}

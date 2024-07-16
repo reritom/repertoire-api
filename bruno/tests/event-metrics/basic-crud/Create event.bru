@@ -1,0 +1,33 @@
+meta {
+  name: Create event
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{api-domain}}/api/task-events
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+body:json {
+  {
+    "task_id": "{{createdTaskId}}",
+    "around": "today"
+  }
+}
+
+vars:post-response {
+  createdTaskEventId: res.body.id
+}
+
+tests {
+  test("Response should be 201", () => {
+    expect(res.getStatus()).to.equal(201);
+  })
+  
+}

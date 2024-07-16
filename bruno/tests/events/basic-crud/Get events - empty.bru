@@ -1,0 +1,29 @@
+meta {
+  name: Get events - empty
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{api-domain}}/api/task-events?task_id={{createdTaskId}}
+  body: none
+  auth: none
+}
+
+params:query {
+  task_id: {{createdTaskId}}
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+tests {
+  test("Response should be ok", () => {
+    expect(res.getStatus()).to.equal(200);
+  })
+  
+  test("Response should be empty", () => {
+    expect(res.getBody()).to.have.lengthOf(0);
+  })
+}

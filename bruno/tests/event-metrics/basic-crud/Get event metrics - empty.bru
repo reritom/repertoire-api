@@ -1,0 +1,25 @@
+meta {
+  name: Get event metrics - empty
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{api-domain}}/api/task-event-metrics
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+tests {
+  test("Response should be ok", () => {
+    expect(res.getStatus()).to.equal(200);
+  })
+  
+  test("Response should be empty", () => {
+    expect(res.getBody()).to.have.lengthOf(0);
+  })
+}

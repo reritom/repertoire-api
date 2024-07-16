@@ -1,0 +1,34 @@
+meta {
+  name: Create event metric
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{api-domain}}/api/task-event-metrics
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+body:json {
+  {
+    "task_metric_id": "{{createdTaskMetricId}}",
+    "task_event_id": "{{createdTaskEventId}}",
+    "value": 5
+  }
+}
+
+vars:post-response {
+  createdTaskEventMetricId: res.body.id
+}
+
+tests {
+  test("Response should be 201", () => {
+    expect(res.getStatus()).to.equal(201);
+  })
+  
+}

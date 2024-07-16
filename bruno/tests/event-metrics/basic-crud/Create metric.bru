@@ -1,0 +1,35 @@
+meta {
+  name: Create metric
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{api-domain}}/api/task-metrics
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+body:json {
+  {
+    "task_id": "{{createdTaskId}}",
+    "name": "My new metric",
+    "prompt": "My metric?",
+    "required": true
+  }
+}
+
+vars:post-response {
+  createdTaskMetricId: res.body.id
+}
+
+tests {
+  test("Response should be 201", () => {
+    expect(res.getStatus()).to.equal(201);
+  })
+  
+}

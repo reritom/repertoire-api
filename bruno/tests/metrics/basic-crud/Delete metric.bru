@@ -1,0 +1,22 @@
+meta {
+  name: Delete metric
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{api-domain}}/api/task-metrics/{{createdTaskMetricId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+tests {
+  test("Response should be ok", () => {
+    expect(res.getStatus()).to.equal(204);
+  })
+  
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Get event metric - ok
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{api-domain}}/api/task-event-metrics/{{createdTaskEventMetricId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+tests {
+  test("Response should be ok", () => {
+    expect(res.getStatus()).to.equal(200);
+  })
+}
