@@ -52,15 +52,15 @@ build-base:
     COPY pyproject.toml pdm.lock ./
     RUN pdm sync --prod
 
-# build-repertoire-api-image - Build the local deployment image
-build-repertoire-api-image:
+# build-repertoire-api-dev-image - Build the local deployment image
+build-repertoire-api-dev-image:
     FROM +build-base
     WORKDIR /home
 
     COPY . .
     EXPOSE 8080
     CMD uvicorn wsgi:app --host 0.0.0.0 --port 8080 --reload
-    SAVE IMAGE repertoire-api:latest
+    SAVE IMAGE repertoire-api-dev:latest
 
 # build-repertoire-test-image - Build the test container image
 build-repertoire-test-image:
@@ -102,10 +102,10 @@ test:
 deploy-local:
     LOCALLY
     WAIT
-        BUILD +build-repertoire-api-image
+        BUILD +build-repertoire-api-dev-image
     END
 
-    WITH DOCKER --load repertoire-api:latest=+build-repertoire-api-image
+    WITH DOCKER --load repertoire-api-dev:latest=+build-repertoire-api-dev-image
         RUN docker-compose -f etc/local/local-compose.yml up
     END
 
@@ -140,9 +140,9 @@ build-openapi-json:
     WORKDIR /home
     COPY . .
 
-    WITH DOCKER --compose etc/docs/docgen-compose.yaml --load repertoire-api:latest=+build-repertoire-api-image
+    WITH DOCKER --compose etc/docs/docgen-compose.yaml --load repertoire-api-dev:latest=+build-repertoire-api-dev-image
         # Generate the openapi which will be saved in a mounted volume
-        RUN docker exec -t repertoire-api python -m app.cli generate-openapi /home/built-artifacts/openapi.json
+        RUN docker exec -t repertoire-api-dev python -m app.cli generate-openapi /home/built-artifacts/openapi.json
     END
 
     SAVE ARTIFACT /home/built-artifacts/openapi.json
@@ -165,14 +165,14 @@ deploy-docs-local:
 # init-local-database - Create the database and tables for a fresh local deployment
 init-local-database:
     LOCALLY
-    RUN docker exec -t repertoire-api python -m app.cli init-db
+    RUN docker exec -t repertoire-api-dev python -m app.cli init-db
 
 # create-local-user - Create a user on the local deployed instance
 create-local-user:
     LOCALLY
     ARG --required email
     ARG --required password
-    RUN docker exec -t repertoire-api python -m app.cli accounts create-user --email=$email --password=$password
+    RUN docker exec -t repertoire-api-dev python -m app.cli accounts create-user --email=$email --password=$password
 
 # run-bruno-suite - Run a specific bruno test folder against a ephemeral instance of the backend, example argument: --SUITE=tests/authentication/login 
 run-bruno-suite:
@@ -182,9 +182,9 @@ run-bruno-suite:
     ARG --required SUITE
     COPY . .
 
-    WITH DOCKER --compose etc/local/local-compose.yml --load repertoire-api:latest=+build-repertoire-api-image
-        RUN docker exec -t repertoire-api python -m app.cli init-db &&\
-            docker exec -t repertoire-api python -m app.cli accounts create-user --email=test@test.test --password=test1 &&\
+    WITH DOCKER --compose etc/local/local-compose.yml --load repertoire-api-dev:latest=+build-repertoire-api-dev-image
+        RUN docker exec -t repertoire-api-dev python -m app.cli init-db &&\
+            docker exec -t repertoire-api-dev python -m app.cli accounts create-user --email=test@test.test --password=test1 &&\
             cd bruno &&\
             bru run $SUITE --env local
     END

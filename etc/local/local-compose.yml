@@ -11,9 +11,9 @@ services:
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: magical_password
         command: postgres -c 'max_connections=1000'
-    repertoire-api:
-        container_name: repertoire-api
-        image: repertoire-api:latest
+    repertoire-api-dev:
+        container_name: repertoire-api-dev
+        image: repertoire-api-dev:latest
         ports:
             - "8080:8080"
         volumes:
