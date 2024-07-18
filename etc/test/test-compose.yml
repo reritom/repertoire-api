@@ -21,4 +21,6 @@ services:
         restart: on-failure
         environment:
             POSTGRES_DB_URI: postgresql+psycopg2://postgres:password@test-database/onetest
+            CELERY_BROKER_URL: ""
+            CELERY_RESULT_BACKEND: ""
         command: tail -F /dev/null

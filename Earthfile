@@ -106,7 +106,7 @@ deploy-local:
     END
 
     WITH DOCKER --load repertoire-api-dev:latest=+build-repertoire-api-dev-image
-        RUN docker-compose -f etc/local/local-compose.yml up
+        RUN docker compose -f etc/local/local-compose.yml up
     END
 
 # format - Run ruff format on the source

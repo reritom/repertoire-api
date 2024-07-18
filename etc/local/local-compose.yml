@@ -1,8 +1,22 @@
+x-base-backend: &base-backend
+    image: repertoire-api-dev:latest
+    volumes:
+        - ../../app:/home/app:delegated
+    depends_on:
+        - repertoire-database-dev
+    links:
+        - repertoire-database-dev
+    restart: on-failure
+    environment:
+        POSTGRES_DB_URI: postgresql+psycopg2://one:password@repertoire-database-dev/repertoire
+        CELERY_BROKER_URL: redis://repertoire-redis-dev:6379
+        CELERY_RESULT_BACKEND: redis://repertoire-redis-dev:6379
+
 version: '2'
 services:
-    repertoire-database:
+    repertoire-database-dev:
         image: postgres:16.3-alpine
-        container_name: repertoire-database
+        container_name: repertoire-database-dev
         user: postgres
         ports:
             - "5432:5432"
@@ -12,17 +26,20 @@ services:
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: magical_password
         command: postgres -c 'max_connections=1000'
+    repertoire-redis-dev:
+        image: redis:7.2.5-alpine
+        container_name: repertoire-redis-dev
+        restart: on-failure
+        ports:
+            - "6379:6379"
+        healthcheck:
+            test: [ "CMD", "redis-cli", "ping" ]
     repertoire-api-dev:
+        <<: *base-backend
         container_name: repertoire-api-dev
-        image: repertoire-api-dev:latest
         ports:
             - "8080:8080"
-        volumes:
-            - ../../app:/home/app:delegated
-        depends_on:
-            - repertoire-database
-        links:
-            - repertoire-database
-        restart: on-failure
-        environment:
-            POSTGRES_DB_URI: postgresql+psycopg2://one:password@repertoire-database/repertoire
+    repertoire-celery-beat-dev:
+        <<: *base-backend
+        container_name: repertoire-celery-beat-dev
+        command: watchmedo auto-restart -d . -p '*.py' -R -- celery -A wsgi.celery worker -l info -B -s /tmp/celerybeat-schedule --uid=nobody --gid=nogroup

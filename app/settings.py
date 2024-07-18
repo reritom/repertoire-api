@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     SQLALCHEMY_DATABASE_URI: Optional[str] = None
     SQLALCHEMY_ENGINE_OPTIONS: ClassVar = {"pool_size": 100}
 
+    # Redis
+    CELERY_BROKER_URL: str
+    CELERY_RESULT_BACKEND: str
+
     # Application
     AUTH_SECRET_KEY: str = "CHANGEME"
     ACCESS_TOKEN_LIFESPAN_MINUTES: int = 60 * 24 * 30  # Around a month, dummy value
