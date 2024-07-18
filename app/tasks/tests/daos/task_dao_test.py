@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 import pytest
 from sqlalchemy.exc import IntegrityError
@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from app.accounts.tests.factories import UserFactory
 from app.tasks.daos.task_dao import TaskDao
 from app.tasks.models.task import Task, TaskStatus
+from app.tasks.models.task_until import UntilType
 from app.tasks.tests.factories import (
     CategoryFactory,
     TaskFactory,
@@ -245,3 +246,41 @@ def test_delete_ok(session):
     TaskDao(session=session).delete(id=task.id, user_id=task.user_id)
 
     assert session.get(Task, task.id) is None
+
+
+def test_mark_ongoing_date_tasks_as_completed(session):
+    to_be_completed_yesterday = TaskFactory(
+        status=TaskStatus.ongoing,
+        until__type=UntilType.date,
+        until__date=date.today() - timedelta(days=1),
+    )
+    to_be_completed_today__ongoing = TaskFactory(
+        status=TaskStatus.ongoing, until__type=UntilType.date, until__date=date.today()
+    )
+    to_be_completed_today__paused = TaskFactory(
+        status=TaskStatus.paused, until__type=UntilType.date, until__date=date.today()
+    )
+    to_be_completed_tomorrow__ongoing = TaskFactory(
+        status=TaskStatus.ongoing,
+        until__type=UntilType.date,
+        until__date=date.today() + timedelta(days=1),
+    )
+    to_be_completed_tomorrow__paused = TaskFactory(
+        status=TaskStatus.paused,
+        until__type=UntilType.date,
+        until__date=date.today() + timedelta(days=1),
+    )
+
+    TaskDao(session=session).mark_ongoing_date_tasks_as_completed()
+
+    session.refresh(to_be_completed_yesterday)
+    session.refresh(to_be_completed_today__ongoing)
+    session.refresh(to_be_completed_today__paused)
+    session.refresh(to_be_completed_tomorrow__ongoing)
+    session.refresh(to_be_completed_tomorrow__paused)
+
+    assert to_be_completed_yesterday.status == TaskStatus.completed
+    assert to_be_completed_today__ongoing.status == TaskStatus.completed
+    assert to_be_completed_today__paused.status == TaskStatus.completed
+    assert to_be_completed_tomorrow__ongoing.status == TaskStatus.ongoing
+    assert to_be_completed_tomorrow__paused.status == TaskStatus.paused

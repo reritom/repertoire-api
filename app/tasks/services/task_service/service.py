@@ -18,6 +18,7 @@ from ._service import (
     _delete_task,
     _get_task,
     _get_tasks,
+    _mark_ongoing_date_tasks_as_completed,
     _pause_task,
     _recompute_task_state,
     _unpause_task,
@@ -150,3 +151,8 @@ def update_task_until(
         authenticated_user=authenticated_user,
         until_creation_payload=until_creation_payload,
     )
+
+
+def mark_ongoing_date_tasks_as_completed(session: SessionType):
+    # TODO test
+    _mark_ongoing_date_tasks_as_completed(session=session)

@@ -1,11 +1,12 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Optional
 
-from sqlalchemy import nulls_last
+from sqlalchemy import and_, nulls_last, update
 
 from app.shared.dao import BaseDao
 from app.shared.sentinels import NO_FILTER, NO_OP, OptionalAction, OptionalFilter
 from app.tasks.models.task import Task, TaskStatus
+from app.tasks.models.task_until import TaskUntil, UntilType
 
 
 class TaskDao(BaseDao[Task]):
@@ -108,3 +109,19 @@ class TaskDao(BaseDao[Task]):
         task = self.get(id=id, user_id=user_id)
         self.session.delete(task)
         self.session.flush()
+
+    def mark_ongoing_date_tasks_as_completed(self):
+        # Any ongoing or paused task that has reached the
+        # expiration date will be updated to completed
+        self.session.execute(
+            update(Task)
+            .where(
+                Task.status != TaskStatus.completed,
+                Task.until.has(
+                    and_(
+                        TaskUntil.type == UntilType.date, TaskUntil.date <= date.today()
+                    )
+                ),
+            )
+            .values({"status": TaskStatus.completed, "next_event_datetime": None})
+        )

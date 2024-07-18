@@ -288,3 +288,13 @@ def _update_task_until(
         task_id=task_id,
         authenticated_user=authenticated_user,
     )
+
+
+@inject
+def _mark_ongoing_date_tasks_as_completed(
+    session: SessionType,
+    # Injected
+    task_dao: TaskDao = Depends(get_task_dao),
+):
+    task_dao.mark_ongoing_date_tasks_as_completed()
+    session.commit()
