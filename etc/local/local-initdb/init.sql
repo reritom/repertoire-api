@@ -1,4 +1,5 @@
 CREATE USER one WITH PASSWORD 'password';
+GRANT ALL ON SCHEMA public TO one;
 
-CREATE DATABASE repertoire;
+CREATE DATABASE repertoire OWNER one;
 GRANT ALL PRIVILEGES ON DATABASE repertoire TO one;
