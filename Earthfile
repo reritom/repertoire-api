@@ -52,6 +52,12 @@ build-base:
     COPY pyproject.toml pdm.lock ./
     RUN pdm sync --prod
 
+    # To check that migrations have been applied
+    RUN apk add postgresql-client
+    ENV CI=true
+    RUN apk add curl
+    RUN curl -sSf https://atlasgo.sh | sh
+
 # build-repertoire-api-dev-image - Build the local deployment image
 build-repertoire-api-dev-image:
     FROM +build-base
@@ -59,8 +65,20 @@ build-repertoire-api-dev-image:
 
     COPY . .
     EXPOSE 8080
-    CMD uvicorn wsgi:app --host 0.0.0.0 --port 8080 --reload
+    CMD 'sh etc/scripts/await_migrations.sh || exit 1; uvicorn wsgi:app --host 0.0.0.0 --port 8080 --reload'
+
     SAVE IMAGE repertoire-api-dev:latest
+
+# build-repertoire-celery-beat-dev-image - Build the local deployment image
+build-repertoire-celery-beat-dev-image:
+    FROM +build-base
+    WORKDIR /home
+
+    COPY . .
+    EXPOSE 8080
+    CMD 'sh etc/scripts/await_migrations.sh || exit 1; watchmedo auto-restart -d . -p "*.py" -R -- celery -A wsgi.celery worker -l info -B -s /tmp/celerybeat-schedule --uid=nobody --gid=nogroup'
+
+    SAVE IMAGE repertoire-celery-beat-dev:latest
 
 # build-repertoire-test-image - Build the test container image
 build-repertoire-test-image:
@@ -105,7 +123,7 @@ deploy-local:
         BUILD +build-repertoire-api-dev-image
     END
 
-    WITH DOCKER --load repertoire-api-dev:latest=+build-repertoire-api-dev-image
+    WITH DOCKER --load repertoire-api-dev:latest=+build-repertoire-api-dev-image --load repertoire-migrator:latest=+build-repertoire-migrator-image --load repertoire-celery-beat-dev:latest=+build-repertoire-celery-beat-dev-image
         RUN docker compose -f etc/local/local-compose.yml up
     END
 
@@ -200,4 +218,91 @@ run-all-bruno-suites:
         ELSE
             BUILD +run-bruno-suite --SUITE=$suite
         END
+    END
+
+# atlas-base - [Internal] Base image for migration flows
+atlas-base:
+    FROM earthly/dind:alpine
+
+    WORKDIR /home
+
+    ENV CI=true
+    RUN apk add curl
+    RUN curl -sSf https://atlasgo.sh | sh
+
+    COPY atlas.hcl atlas.hcl
+    COPY migrations migrations
+
+# generate-atlas-hcl - [Internal] Generate the target schema of the database (atlas hcl format)
+generate-atlas-hcl:
+    FROM +atlas-base
+
+    COPY . .
+
+    # Deploy the local stack
+    WITH DOCKER --compose etc/hcl/hcl-compose.yml --load repertoire-api-dev:latest=+build-repertoire-api-dev-image
+        # Populate the database based on the local code definitions
+        # Then use atlas to create a hcl file based on the local state
+        RUN docker exec -t repertoire-api-dev python -m app.cli init-db && \
+            atlas schema inspect -u "postgres://one:password@localhost:5432/repertoire?sslmode=disable" > schema.hcl
+    END
+
+    SAVE ARTIFACT schema.hcl
+
+# generate-migration-internal - [Internal] Generate a new migration and save the updated migrations directory as an artifact
+generate-migration-internal:
+    FROM +atlas-base
+
+    ARG --required name
+
+    COPY +generate-atlas-hcl/schema.hcl schema.hcl
+
+    WITH DOCKER
+        RUN atlas migrate diff $name \
+            --dir "file://migrations" \
+            --to "file://schema.hcl" \
+            --dev-url "docker://postgres/16/dev?search_path=public"
+    END
+
+    SAVE ARTIFACT migrations
+
+
+# generate-migration - Generate a new migration and overwrite migrations directory
+generate-migration:
+    FROM +atlas-base
+    ARG --required name
+
+    COPY (+generate-migration-internal/migrations --name=$name) migrations
+    SAVE ARTIFACT migrations AS LOCAL migrations
+
+# build-repertoire-migrator-image - Build an ephemeral image that will apply the migrations to the target db
+build-repertoire-migrator-image:
+    FROM +atlas-base
+    RUN apk add postgresql-client
+    CMD 'pg_isready -h ${POSTGRES_HOST} -p ${POSTGRES_PORT} -d ${POSTGRES_DATABASE} || exit 1; atlas migrate apply --url postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}/${POSTGRES_DATABASE}?sslmode=disable'
+    SAVE IMAGE repertoire-migrator:latest
+
+# check-migrations-created - Check that no new migrations need to be made
+check-migrations-created:
+    FROM +atlas-base
+    RUN apk add git
+
+    WORKDIR /home/migrations
+    RUN git init
+    RUN git add --all
+    WORKDIR /home
+
+    COPY (+generate-migration-internal/migrations --name=dummymigration) migrations
+
+    WORKDIR /home/migrations
+    RUN git diff --exit-code
+
+# lint-migrations - Check that the migrations follow the rules
+lint-migrations:
+    FROM +atlas-base
+
+    WITH DOCKER
+        RUN atlas migrate lint --latest 1 \
+            --dir "file://migrations" \
+            --dev-url "docker://postgres/16/dev?search_path=public"
     END
