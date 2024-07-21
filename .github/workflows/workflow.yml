@@ -22,3 +22,5 @@ jobs:
 
       - name: Lint migrations
         run: earthly -P --ci +lint-migrations
+
+      # TODO add bruno tests once sleep is removed from the earthly command

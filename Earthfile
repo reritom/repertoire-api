@@ -200,10 +200,10 @@ run-bruno-suite:
     ARG --required SUITE
     COPY . .
 
-    WITH DOCKER --compose etc/local/local-compose.yml --load repertoire-api-dev:latest=+build-repertoire-api-dev-image
-        RUN docker exec -t repertoire-api-dev python -m app.cli init-db &&\
-            docker exec -t repertoire-api-dev python -m app.cli accounts create-user --email=test@test.test --password=test1 &&\
-            cd bruno &&\
+    WITH DOCKER --compose etc/local/local-compose.yml --load repertoire-api-dev:latest=+build-repertoire-api-dev-image --load repertoire-migrator:latest=+build-repertoire-migrator-image --load repertoire-celery-beat-dev:latest=+build-repertoire-celery-beat-dev-image
+        RUN sleep 10 && \ # TODO make an "await-api script"
+            docker exec -t repertoire-api-dev python -m app.cli accounts create-user --email=test@test.test --password=test1 && \
+            cd bruno && \
             bru run $SUITE --env local
     END
 
