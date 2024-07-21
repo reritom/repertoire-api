@@ -8,22 +8,17 @@ jobs:
       - name: Install earthly
         run: "sudo /bin/sh -c 'wget https://github.com/earthly/earthly/releases/download/v0.8.13/earthly-linux-amd64 -O /usr/local/bin/earthly && chmod +x /usr/local/bin/earthly && /usr/local/bin/earthly bootstrap'"
 
-      - uses: actions/checkout@v4
       - name: Run ruff
         run: earthly --ci +lint-ruff
   
-      - uses: actions/checkout@v4
       - name: Test
         run: earthly -P --ci +test
 
-      - uses: actions/checkout@v4
       - name: Check pdm.lock
         run: earthly --ci +check-deps
 
-      - uses: actions/checkout@v4
       - name: Check migrations created
         run: earthly -P --ci +check-migrations-created
 
-      - uses: actions/checkout@v4
       - name: Lint migrations
         run: earthly -P --ci +lint-migrations
