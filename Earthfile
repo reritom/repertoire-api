@@ -288,14 +288,14 @@ check-migrations-created:
     RUN apk add git
 
     WORKDIR /home/migrations
-    RUN git init
-    RUN git add --all
+    LET initialCount = $(ls -1 | wc -l)
     WORKDIR /home
 
     COPY (+generate-migration-internal/migrations --name=dummymigration) migrations
 
     WORKDIR /home/migrations
-    RUN git diff --exit-code
+    LET newCount = $(ls -1 | wc -l)
+    RUN [ "$newCount" == "$initialCount" ] || { echo "Migrations need to be created" && exit 1; };
 
 # lint-migrations - Check that the migrations follow the rules
 lint-migrations:
