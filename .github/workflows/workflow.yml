@@ -1,0 +1,26 @@
+name: Workflow
+on: [push]
+jobs:
+  all:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install earthly
+        run: "sudo /bin/sh -c 'wget https://github.com/earthly/earthly/releases/download/v0.8.13/earthly-linux-amd64 -O /usr/local/bin/earthly && chmod +x /usr/local/bin/earthly && /usr/local/bin/earthly bootstrap'"
+
+      - name: Run ruff
+        run: earthly --ci +lint-ruff
+  
+      - name: Test
+        run: earthly -P --ci +test
+
+      - name: Check pdm.lock
+        run: earthly --ci +check-deps
+
+      - name: Check migrations created
+        run: earthly -P --ci +check-migrations-created
+
+      - name: Lint migrations
+        run: earthly -P --ci +lint-migrations
+
+      # TODO add bruno tests once sleep is removed from the earthly command
