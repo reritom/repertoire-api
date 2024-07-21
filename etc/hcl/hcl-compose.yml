@@ -29,31 +29,14 @@ services:
         ports:
             - "5432:5432"
         volumes:
-            - ./local-initdb/:/docker-entrypoint-initdb.d
+            - ./hcl-initdb/:/docker-entrypoint-initdb.d
         environment:
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: magical_password
         command: postgres -c 'max_connections=1000'
-    repertoire-migrator-dev:
-        image: repertoire-migrator:latest
-        container_name: repertoire-migrator-dev
-        restart: on-failure
-        environment:
-            <<: *postgres-env
-    repertoire-redis-dev:
-        image: redis:7.2.5-alpine
-        container_name: repertoire-redis-dev
-        restart: on-failure
-        ports:
-            - "6379:6379"
-        healthcheck:
-            test: [ "CMD", "redis-cli", "ping" ]
     repertoire-api-dev:
         <<: *base-backend
         container_name: repertoire-api-dev
+        command: tail -f /dev/null
         ports:
             - "8080:8080"
-    repertoire-celery-beat-dev:
-        <<: *base-backend
-        image: repertoire-celery-beat-dev:latest
-        container_name: repertoire-celery-beat-dev
